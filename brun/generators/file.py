@@ -13,5 +13,5 @@ def generate(args):
         raise ValueError(msg)
     # ---
     with open(filepath, 'rt') as fin:
-        lines = f.readlines()
+        lines = fin.readlines()
         return [line.strip() for line in lines]

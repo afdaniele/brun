@@ -60,7 +60,7 @@ class Config(object):
         # combine fields
         # 1. create one blob for each field
         field_to_blob = {f: i for f,i in zip(self._fields_keys, range(len(self._fields_keys)))}
-        blobs = [self._fields[f] for f in self._fields_keys]
+        blobs = [[(v,) for v in self._fields[f]] for f in self._fields_keys]
         # 2. combine blobs
         for f0, f1 in zip(self._fields_keys, self._fields_keys[1:]):
             next_blob_id = len(blobs)
