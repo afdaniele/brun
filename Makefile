@@ -22,4 +22,6 @@ install:
 
 clean:
 	rm -rf dist/ build/ brun.egg-info/ MANIFEST
+
+uninstall:
 	xargs rm -rf < files.txt
