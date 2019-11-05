@@ -1,3 +1,3 @@
-# run-batch
+# brun
 
-Utility used to run parameterized shell commands
+**brun** (batch-run) is a utility used to run parameterized shell commands
