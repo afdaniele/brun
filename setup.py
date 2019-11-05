@@ -41,12 +41,7 @@ setup(
     zip_safe=False,
     include_package_data=True,
     keywords = ['batch', 'parameterized', 'commands', 'shell'],
-    install_requires=[
-        'ast',
-        'itertools',
-        'argparse',
-        'subprocess',
-    ],
+    install_requires=[],
     scripts=['brun/brun'],
     classifiers=[
         'Development Status :: 3 - Alpha',
