@@ -1,6 +1,7 @@
 import sys
 import argparse
 import logging
+import subprocess
 
 from . import brlogger
 from .lib import Config
@@ -24,13 +25,12 @@ def run():
   config = Config(parsed)
   # execute command
   for cc in config:
-      print(cc.apply(parsed.command))
-
-  # print(parsed.command)
-
-
+      cmd = cc.apply(parsed.command)
+      brlogger.debug(f'Running command: {cmd}')
+      if not parsed.dry_run:
+          subprocess.check_call(cmd)
+  # ---
   brlogger.info('Done!')
-  return
 
 
 def _get_parser():
