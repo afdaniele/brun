@@ -22,11 +22,11 @@ if sys.version_info < (3, 6):
     sys.exit(msg)
 
 
-lib_version = get_version(filename='run_batch/__init__.py')
+lib_version = get_version(filename='brun/__init__.py')
 
 setup(
-    name = 'run_batch',
-    packages = ['run_batch'],
+    name = 'brun',
+    packages = ['brun'],
     version = lib_version,
     license='MIT',
     description = 'Utility used to run parameterized shell commands',
@@ -38,14 +38,12 @@ setup(
     include_package_data=True,
     keywords = ['batch', 'parameterized', 'commands', 'shell'],
     install_requires=[
+        'ast',
+        'itertools',
         'argparse',
         'subprocess',
     ],
-    entry_points={
-        'console_scripts': [
-            'brun = run_batch:run',
-        ]
-    },
+    scripts=['brun/brun'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
