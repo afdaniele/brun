@@ -70,7 +70,7 @@ class Config(object):
             blobs.append(_flatten_data(combinator(blob0, blob1, combinator_args)))
             field_to_blob[f0] = next_blob_id
             field_to_blob[f1] = next_blob_id
-        data = blobs[-1]
+        data = blobs[-1] if blobs else []
         # turn data into CommandConfigs
         for d in data:
             assert len(self._fields_keys) == len(d)
@@ -119,7 +119,7 @@ def _flatten_data(blob):
     nblob = []
     for e in blob:
         if isinstance(e, (tuple, list)) and isinstance(e[0], (tuple, list)):
-            nblob.append(e[0] + (e[1],))
+            nblob.append(e[0] + e[1])
         else:
             nblob.append(e)
     return nblob
