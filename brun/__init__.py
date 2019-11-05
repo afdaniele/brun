@@ -6,4 +6,4 @@ logging.basicConfig()
 brlogger = logging.getLogger('brun')
 brlogger.setLevel(logging.INFO)
 
-from .lib import run
+from .main import run
