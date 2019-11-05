@@ -26,9 +26,11 @@ def run():
   # execute command
   for cc in config:
       cmd = cc.apply(parsed.command)
+      print(f':brun:> {" ".join(cmd)}\n:')
       brlogger.debug(f'Running command: {cmd}')
       if not parsed.dry_run:
           subprocess.check_call(cmd)
+      print(f':\n:brun:< {" ".join(cmd)}\n\n\n')
   # ---
   brlogger.info('Done!')
 
