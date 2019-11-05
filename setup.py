@@ -26,7 +26,11 @@ lib_version = get_version(filename='brun/__init__.py')
 
 setup(
     name = 'brun',
-    packages = ['brun'],
+    packages = [
+        'brun',
+        'brun.generators',
+        'brun.combinators',
+    ],
     version = lib_version,
     license='MIT',
     description = 'Utility used to run parameterized shell commands',
