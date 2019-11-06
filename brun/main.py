@@ -3,12 +3,19 @@ import argparse
 import logging
 import subprocess
 
-from . import brlogger
+from . import brlogger, __version__
 from .lib import Config
 
 
 def run():
     parser = _get_parser()
+    # ---
+    # version
+    if '-v' in sys.argv[1:] or '--version' in sys.argv[1:]:
+        print(f'brun version {__version__}\n')
+        exit(0)
+    # ---
+    # parse arguments
     parsed = parser.parse_args()
     # ---
     # configure logger
