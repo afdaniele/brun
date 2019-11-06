@@ -3,6 +3,15 @@
 **brun** (batch-run) is a utility used to run parameterized shell commands
 
 
+## Install
+
+You can install **brun** using pip:
+
+```
+pip3 install brun
+```
+
+
 ## Usage
 
 The simplest **brun** command looks like the following
