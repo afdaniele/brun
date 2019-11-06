@@ -35,6 +35,7 @@ If we run this command, the output will be
 9
 ```
 
+
 ## Syntax
 
 The syntax for **brun** is very simple:
@@ -82,7 +83,7 @@ The type `f` is an alias for `file`.
 ### Groups
 
 Groups are used to link two or more fields together.
-In particular, a group defines how the values of two or more fields change with respect to another.
+In particular, a group defines how the values of two or more fields change with respect to each other.
 
 Groups are specified using the argument `--group` (in short `-g`). The syntax is the following:
 ```
@@ -91,14 +92,18 @@ Groups are specified using the argument `--group` (in short `-g`). The syntax is
 
  A group has a `type`, a list of fields (i.e., `field1,field2,...`), and some `arguments`.
 
+
 #### Cross
 
 The type `cross` links two or more field values using the Cartesian product. This is the default grouping strategy for fields in **brun**.
 For example, the command
+
 ```
 brun -f x:r:2 -f y:r:3 -g cross:x,y -- echo {x},{y}
 ```
+
 will produce the following output
+
 ```
 0,0
 0,1
@@ -108,15 +113,19 @@ will produce the following output
 1,2
 ```
 
+
 #### Zip
 
 The type `zip` links two or more field values using the indices of their values.
 Field values will be clipped at the size of the smallest field within the group.
 For example, the command
+
 ```
 brun -f x:r:2 -f y:r:3 -g zip:x,y -- echo {x},{y}
 ```
+
 will produce the following output
+
 ```
 0,0
 1,1
