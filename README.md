@@ -61,7 +61,7 @@ For example, `-f x:list:0,2,4`, or, similarly `-f x:l:0,2,4`.
 
 #### Range
 
-Populates a placeholder according to a defined range of values. The syntax is
+Populates a placeholder according to a given range of values. The syntax is
 ```
 -f name:range:s[,f[,i]]
 ```
