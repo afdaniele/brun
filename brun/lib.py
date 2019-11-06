@@ -85,7 +85,7 @@ class Config(object):
 
 def _parse_field(field_str):
     parts = tuple(field_str.split(':'))
-    if len(parts) <= 2:
+    if len(parts) <= 1:
         raise CLISyntaxError(f'Syntax error in field descriptor "{field_str}"')
     # ---
     name, type, *generator_args = parts
