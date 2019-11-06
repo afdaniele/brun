@@ -1,5 +1,8 @@
 all:
 
+new-dist:
+	$(MAKE) clean bump build upload
+
 bump-upload:
 	$(MAKE) bump
 	$(MAKE) upload
