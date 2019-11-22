@@ -81,6 +81,9 @@ class Config(object):
     def __iter__(self):
         return iter(self._data)
 
+    def __len__(self):
+        return len(self._data)
+
 
 
 def _parse_field(field_str):

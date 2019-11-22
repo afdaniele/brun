@@ -30,6 +30,7 @@ setup(
         'brun',
         'brun.generators',
         'brun.combinators',
+        'brun.utils',
     ],
     version = lib_version,
     license='MIT',

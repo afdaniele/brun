@@ -3,8 +3,10 @@ import argparse
 import logging
 import subprocess
 
-from . import brlogger, __version__
+from . import brlogger, cprint, __version__
 from .lib import Config
+from .utils import Pool
+from .constants import *
 
 
 def run():
@@ -30,25 +32,39 @@ def run():
     parsed.group = [parsed.group] if not isinstance(parsed.group, list) else parsed.group
     # parse brun configuration
     config = Config(parsed)
-    # execute command
+    # define number of workers
+    num_workers = parsed.parallel if parsed.parallel != -1 else len(config)
+    num_workers = min(MAX_PARALLEL_WORKERS, max(1, num_workers))
+    is_parallel = num_workers > 1
+    # add commands to the pool
+    pool = Pool(num_workers)
     for cc in config:
         cmd = cc.apply(parsed.command)
-        print(f':brun:> {" ".join(cmd)}\n:')
-        brlogger.debug(f'Running command: {cmd}')
-        if not parsed.dry_run:
-            error = None
-            try:
-                subprocess.check_call(cmd)
-            except subprocess.CalledProcessError as e:
-                error = e
-            if error:
-                if not parsed.ignore_errors:
-                    raise error
-                brlogger.warning(f'The command "{cmd}" failed with error:\n{error}')
-        print(f':\n:brun:< {" ".join(cmd)}\n\n\n')
+        pool.enqueue(_worker_task, cmd, parsed, is_parallel=is_parallel)
+    # start pool and wait
+    pool.run()
+    pool.join()
     # ---
     brlogger.info('Done!')
 
+
+def _worker_task(cmd, parsed, is_parallel, print=False):
+    stdout = subprocess.PIPE if is_parallel else sys.stdout
+    cprint(PARALLEL_TO_START_PROMPT_STRING[is_parallel].format(" ".join(cmd)))
+    brlogger.debug(f'Running command: {cmd}')
+    if not parsed.dry_run:
+        error = None
+        try:
+            res = subprocess.run(cmd, check=True, stdout=stdout)
+            if is_parallel and print:
+                cprint(res.stdout.decode('utf-8'))
+        except subprocess.CalledProcessError as e:
+            error = e
+        if error:
+            if not parsed.ignore_errors:
+                raise error
+            brlogger.warning(f'The command "{cmd}" failed with error:\n{error}')
+    cprint(PARALLEL_TO_END_PROMPT_STRING[is_parallel].format(" ".join(cmd)))
 
 def _get_parser():
     parser = argparse.ArgumentParser()
@@ -66,8 +82,11 @@ def _get_parser():
     )
     parser.add_argument(
         '-p', '--parallel',
-        type=int,
+        const=-1,
         default=1,
+        action='store',
+        nargs='?',
+        type=int,
         help="How many commands can run in parallel"
     )
     parser.add_argument(
