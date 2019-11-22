@@ -2,7 +2,7 @@ import sys
 import logging
 import threading
 
-__version__ = '0.1.4'
+__version__ = '0.1.5'
 
 # define logger
 logging.basicConfig()
