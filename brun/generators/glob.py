@@ -11,9 +11,9 @@ type_to_fcn_map = {
 
 def generate(args):
     args = args[0].split(',')
-    if len(args) not in [1, 2]:
+    if len(args) not in [1, 2, 3]:
         msg = 'The field type "glob" takes the following arguments: ' + \
-              'path,[query,[filter-type]]'
+              'path[,query[,filter-type]]'
         raise ValueError(msg)
     # ---
     path = args[0]
