@@ -31,7 +31,11 @@ def run():
     parsed.field = [parsed.field] if not isinstance(parsed.field, list) else parsed.field
     parsed.group = [parsed.group] if not isinstance(parsed.group, list) else parsed.group
     # parse brun configuration
-    config = Config(parsed)
+    try:
+      config = Config(parsed)
+    except Exception as e:
+      brlogger.error(str(e))
+      exit(-1)
     # define number of workers
     num_workers = parsed.parallel if parsed.parallel != -1 else len(config)
     num_workers = min(MAX_PARALLEL_WORKERS, max(1, num_workers))
