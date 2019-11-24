@@ -80,6 +80,16 @@ The values will be loaded from the given file, the content of one line will gene
 The type `f` is an alias for `file`.
 
 
+#### Glob
+
+Populates a placeholder according to the content of a directory. The syntax is
+```
+-f name:glob:path,[query,[filter-type]]
+```
+The argument `path` specifies the path to examine, `query` is a glob-like regular expression to filter the results, `filter-type` is one of `[*, f, g]` indicating the types of objects to include, `* (all)`, `f (file)`, `d (directories)`.
+The type `g` is an alias for `glob`.
+
+
 ### Groups
 
 Groups are used to link two or more fields together.
