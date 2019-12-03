@@ -6,7 +6,7 @@ from time import sleep
 #default exception handler. if you want to take some action on failed tasks
 #maybe add the task back into the queue, then make your own handler and pass it in
 def default_handler(name, exception, *args, **kwargs):
-  print >> stderr, '%s raised %s with args %s and kwargs %s' %  (name, str(exception), repr(args), repr(kwargs))
+  print('%s raised %s with args %s and kwargs %s' %  (name, str(exception), repr(args), repr(kwargs)), file=stderr)
   pass
 
 #class for workers
