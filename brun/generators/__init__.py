@@ -18,17 +18,24 @@ from .stdin import \
     generate as generator_stdin, \
     aliases as aliases_stdin
 
+# generator: glob
+from .glob import \
+    generate as generator_glob, \
+    aliases as aliases_glob
+
 _generators_map = {
     'list': generator_list,
     'range': generator_range,
     'file': generator_file,
     'stdin': generator_stdin,
+    'glob': generator_glob,
 }
 
 _generators_map.update({alias: generator_list for alias in aliases_list})
 _generators_map.update({alias: generator_range for alias in aliases_range})
 _generators_map.update({alias: generator_file for alias in aliases_file})
 _generators_map.update({alias: generator_stdin for alias in aliases_stdin})
+_generators_map.update({alias: generator_glob for alias in aliases_glob})
 
 
 def _get_generator(gen_name):
