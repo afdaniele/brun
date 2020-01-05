@@ -231,13 +231,7 @@ class TestGenerators(unittest.TestCase):
         expected_output = {'key': [1, 2]}
         self.assertEqual(expected_output, gen([dirpath]))
 
-    def test_gen_json_singlekeyinput_file(self):
-        gen = self._get_generator('json')
-        dirpath = get_sandbox_object(2, 'j8.json')
-        expected_output = {'key1': [1, 11, 21], 'key2': [2, 12, 22], 'key3': [3, 13, 23]}
-        self.assertEqual(expected_output, gen([dirpath]))
-
-    def test_gen_json_singlekeyinput_file(self):
+    def test_gen_json_multikeyinput_file(self):
         gen = self._get_generator('json')
         dirpath = get_sandbox_object(2, 'j8.json')
         expected_output = {'key1': [1, 11, 21], 'key2': [2, 12, 22], 'key3': [3, 13, 23]}
