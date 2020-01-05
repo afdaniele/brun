@@ -58,6 +58,10 @@ class Config(object):
             values = generator(generator_args)
             if isinstance(values, dict):
                 self._fields.update(values)
+                # fields that are generated together are naturally grouped using zip
+                keys = list(values.keys())
+                for k0, k1 in zip(keys, keys[1:]):
+                    parsed.group.append(f'zip:{k0},{k1}')
             else:
                 self._fields[name] = values
         self._fields_keys = sorted(list(self._fields.keys()))
