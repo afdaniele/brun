@@ -1,11 +1,12 @@
+ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+
 all:
 
 new-dist:
-	$(MAKE) clean bump build upload
+	$(MAKE) clean bump-upload
 
 bump-upload:
-	$(MAKE) bump
-	$(MAKE) upload
+	$(MAKE) test bump upload
 
 bump:
 	bumpversion patch
@@ -28,3 +29,12 @@ clean:
 
 uninstall:
 	xargs rm -rf < files.txt
+
+test:
+	@echo "Running unit tests:"; echo ""
+	@PYTHONPATH="${ROOT_DIR}:$${PYTHONPATH}" \
+		python3 \
+			-m unittest discover \
+			--verbose \
+			-s "${ROOT_DIR}/tests/unit" \
+			-p "test_*.py"
