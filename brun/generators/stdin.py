@@ -12,4 +12,4 @@ def generate(args):
         sep = args[0].strip()
     values = [l.strip().replace('\n', ';') for l in sys.stdin.read().split(sep)]
     # ---
-    return list(filter(lambda l: len(l) > 0, values))
+    return list(filter(len, values))
