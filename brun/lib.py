@@ -1,3 +1,4 @@
+import os
 import re
 import sys
 import argparse
@@ -7,6 +8,7 @@ from . import brlogger
 from .exceptions import CLISyntaxError
 from .generators import _get_generator
 from .combinators import _get_combinator
+from .constants import *
 
 
 class CommandConfig(object):
@@ -36,6 +38,11 @@ class Config(object):
     def __init__(self, parsed):
         self._data = []
         self._fields = dict()
+        # use default field if none were given
+        if 'field' not in parsed:
+            default_json_input_file = os.path.join(os.getcwd(), DEFAULT_FIELD[2])
+            if os.path.exists(default_json_input_file):
+                parsed.field = [':'.join(DEFAULT_FIELD)]
         # parse fields and create their data points
         for field_str in parsed.field:
             # parse field
@@ -46,7 +53,11 @@ class Config(object):
                 raise ValueError(msg)
             # generate data
             generator = _get_generator(type)
-            self._fields[name] = generator(generator_args)
+            values = generator(generator_args)
+            if isinstance(values, dict):
+                self._fields.update(values)
+            else:
+                self._fields[name] = values
         self._fields_keys = sorted(list(self._fields.keys()))
         # default combination strategy is 'cross'
         combination_map = {k: ('default', None) for k in itertools.product(self._fields_keys, self._fields_keys)}

@@ -9,3 +9,5 @@ PARALLEL_TO_END_PROMPT_STRING = {
     True: ':brun: Finished < {0}',
     False: ':\n:brun:< {0}\n\n\n'
 }
+
+DEFAULT_FIELD = ('_builtin_field', 'json', '.brun')

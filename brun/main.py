@@ -28,7 +28,8 @@ def run():
     if parsed.suppress_warnings and parsed.debug:
         brlogger.info('Warnings cannot be suppressed when --debug is active.')
     # turn fields and groups into lists
-    parsed.field = [parsed.field] if not isinstance(parsed.field, list) else parsed.field
+    if 'field' in parsed:
+        parsed.field = [parsed.field] if not isinstance(parsed.field, list) else parsed.field
     parsed.group = [parsed.group] if not isinstance(parsed.group, list) else parsed.group
     # parse brun configuration
     try:
@@ -75,8 +76,8 @@ def _get_parser():
     parser.add_argument(
         '-f', '--field',
         action='append',
-        default=[],
-        help="Specify a field (syntax: 'name:type:args')"
+        default=argparse.SUPPRESS,
+        help="Specify a field (syntax: 'name:type[:args]')"
     )
     parser.add_argument(
         '-g', '--group',
