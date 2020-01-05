@@ -4,7 +4,7 @@ import logging
 import subprocess
 
 from . import brlogger, cprint, __version__
-from .lib import Config
+from .lib import Config, CLISyntaxError
 from .utils import Pool
 from .constants import *
 
@@ -33,10 +33,14 @@ def run():
     parsed.group = [parsed.group] if not isinstance(parsed.group, list) else parsed.group
     # parse brun configuration
     try:
-      config = Config(parsed)
+        config = Config(parsed)
+    except CLISyntaxError as e:
+        brlogger.error(str(e))
+        parser.print_help()
+        exit(-1)
     except Exception as e:
-      brlogger.error(str(e))
-      exit(-1)
+        brlogger.error(str(e))
+        exit(-2)
     # define number of workers
     num_workers = parsed.parallel if parsed.parallel != -1 else len(config)
     num_workers = min(MAX_PARALLEL_WORKERS, max(1, num_workers))

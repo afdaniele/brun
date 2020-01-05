@@ -43,6 +43,8 @@ class Config(object):
             default_json_input_file = os.path.join(os.getcwd(), DEFAULT_FIELD[2])
             if os.path.exists(default_json_input_file):
                 parsed.field = [':'.join(DEFAULT_FIELD)]
+            else:
+                raise CLISyntaxError("Argument --field/-f is required when the file '.brun' does not exist.")
         # parse fields and create their data points
         for field_str in parsed.field:
             # parse field
