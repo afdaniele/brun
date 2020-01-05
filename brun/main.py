@@ -64,7 +64,7 @@ def _worker_task(cmd, parsed, is_parallel, print=False):
     if not parsed.dry_run:
         error = None
         try:
-            res = subprocess.run(cmd, check=True, stdout=stdout)
+            res = subprocess.run(' '.join(cmd), check=True, shell=True, stdout=stdout)
             if is_parallel and print:
                 cprint(res.stdout.decode('utf-8'))
         except subprocess.CalledProcessError as e:
