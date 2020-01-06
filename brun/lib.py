@@ -1,7 +1,5 @@
 import os
 import re
-import sys
-import argparse
 import itertools
 
 from . import brlogger

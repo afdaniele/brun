@@ -17,4 +17,6 @@ def cprint(msg, pipe=sys.stdout):
     pipe.flush()
     _print_sem.release()
 
-from .main import run
+
+# import CLI entrypoint
+from .cli import run

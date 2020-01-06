@@ -1,4 +1,4 @@
-MAX_PARALLEL_WORKERS = 4
+MAX_PARALLEL_WORKERS = 16
 
 PARALLEL_TO_START_PROMPT_STRING = {
     True: ':brun: Starting > {0}',
@@ -11,3 +11,7 @@ PARALLEL_TO_END_PROMPT_STRING = {
 }
 
 DEFAULT_FIELD = ('_builtin_field', 'json', '.brun')
+
+ESCALATE_TO_KILL_AFTER_SECS = 10
+
+APP_HEARTBEAT_HZ = 10

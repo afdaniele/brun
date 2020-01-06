@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
-from brun import run
+from brun.cli import run
+
 
 if __name__ == '__main__':
     run()

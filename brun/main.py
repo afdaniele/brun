@@ -1,141 +1,148 @@
 import sys
-import argparse
+import time
+import signal
 import logging
 import subprocess
 
-from . import brlogger, cprint, __version__
+from enum import Enum
+from threading import Timer
+
+from . import brlogger, cprint
 from .lib import Config, CLISyntaxError
 from .utils import Pool
 from .constants import *
 
 
-def run():
-    parser = _get_parser()
-    # ---
-    # version
-    if '-v' in sys.argv[1:] or '--version' in sys.argv[1:]:
-        print(f'brun version {__version__}\n')
-        exit(0)
-    # ---
-    # parse arguments
-    parsed = parser.parse_args()
-    # ---
-    # configure logger
-    if parsed.suppress_warnings:
-        brlogger.addFilter(lambda e: e.levelno != logging.WARNING)
-    if parsed.debug:
-        brlogger.setLevel(logging.DEBUG)
-    if parsed.suppress_warnings and parsed.debug:
-        brlogger.info('Warnings cannot be suppressed when --debug is active.')
-    # turn fields and groups into lists
-    if 'field' in parsed:
-        parsed.field = [parsed.field] if not isinstance(parsed.field, list) else parsed.field
-    parsed.group = [parsed.group] if not isinstance(parsed.group, list) else parsed.group
-    # parse brun configuration
-    try:
-        config = Config(parsed)
-    except CLISyntaxError as e:
-        brlogger.error(str(e))
-        parser.print_help()
-        exit(-1)
-    except Exception as e:
-        brlogger.error(str(e))
-        exit(-2)
-    # define number of workers
-    num_workers = parsed.parallel if parsed.parallel != -1 else len(config)
-    num_workers = min(MAX_PARALLEL_WORKERS, max(1, num_workers))
-    is_parallel = num_workers > 1
-    # add commands to the pool
-    pool = Pool(num_workers)
-    for cc in config:
-        cmd = cc.apply(parsed.command)
-        pool.enqueue(_worker_task, cmd, parsed, is_parallel=is_parallel)
-    # start pool and wait
-    pool.run()
-    pool.join()
-    # ---
-    brlogger.info('Done!')
+
+class AppStatus(Enum):
+    INITIALIZING = 1
+    RUNNING = 2
+    ABORTING = 3
+    KILLING = 4
+    DONE = 10
 
 
-def _worker_task(cmd, parsed, is_parallel, print=False):
-    stdout = subprocess.PIPE if is_parallel else sys.stdout
-    cprint(PARALLEL_TO_START_PROMPT_STRING[is_parallel].format(" ".join(cmd)))
-    brlogger.debug(f'Running command: {cmd}')
-    if not parsed.dry_run:
-        error = None
+class Brun():
+
+    _status = AppStatus.INITIALIZING
+    _sigint_counter = 0
+    _sigint_received_time = None
+
+
+    def __init__(self, args):
+        self.status(AppStatus.INITIALIZING)
+        self._setup_signal_handler()
+        self.args = args
+        # ---
+        # configure logger
+        if self.args.suppress_warnings:
+            brlogger.addFilter(lambda e: e.levelno != logging.WARNING)
+        if self.args.debug:
+            brlogger.setLevel(logging.DEBUG)
+        if self.args.suppress_warnings and self.args.debug:
+            brlogger.info('Warnings cannot be suppressed when --debug is active.')
+        # turn fields and groups into lists
+        if 'field' in self.args:
+            self.args.field = [self.args.field] if not isinstance(self.args.field, list) else self.args.field
+        self.args.group = [self.args.group] if not isinstance(self.args.group, list) else self.args.group
+        # parse brun configuration
         try:
-            res = subprocess.run(' '.join(cmd), check=True, shell=True, stdout=stdout)
-            if is_parallel and print:
-                cprint(res.stdout.decode('utf-8'))
-        except subprocess.CalledProcessError as e:
-            error = e
-        if error:
-            if not parsed.ignore_errors:
-                raise error
-            brlogger.warning(f'The command "{cmd}" failed with error:\n{error}')
-    cprint(PARALLEL_TO_END_PROMPT_STRING[is_parallel].format(" ".join(cmd)))
+            self.config = Config(self.args)
+        except CLISyntaxError as e:
+            brlogger.error(str(e))
+            parser.print_help()
+            exit(-1)
+        except Exception as e:
+            brlogger.error(str(e))
+            exit(-2)
+        # define number of workers
+        num_workers = self.args.parallel if self.args.parallel != -1 else len(self.config)
+        self.num_workers = min(MAX_PARALLEL_WORKERS, max(1, num_workers))
+        self.is_parallel = num_workers > 1
 
-def _get_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '-f', '--field',
-        action='append',
-        default=argparse.SUPPRESS,
-        help="Specify a field (syntax: 'name:type[:args]')"
-    )
-    parser.add_argument(
-        '-g', '--group',
-        action='append',
-        default=['cross:*,*'],
-        help="Group two or more fields together according to a combination strategy (syntax: 'strategy:field1,field2[,...]')"
-    )
-    parser.add_argument(
-        '-p', '--parallel',
-        const=-1,
-        default=1,
-        action='store',
-        nargs='?',
-        type=int,
-        help="How many commands can run in parallel"
-    )
-    parser.add_argument(
-        '-i', '--interactive',
-        action='store_true',
-        default=False,
-        help="Whether to run the commands in interactive mode"
-    )
-    parser.add_argument(
-        '-d', '--daemon',
-        action='store_true',
-        default=False,
-        help="Whether to deamonize the commands"
-    )
-    parser.add_argument(
-        '-D', '--dry-run',
-        action='store_true',
-        default=False,
-        help="Performs a dry-run. It shows which commands would run"
-    )
-    parser.add_argument(
-        '--debug',
-        action='store_true',
-        default=False,
-        help="Run in debug mode"
-    )
-    parser.add_argument(
-        '--suppress-warnings',
-        action='store_true',
-        default=False,
-        help="Suppress warnings"
-    )
-    parser.add_argument(
-        '-I', '--ignore-errors',
-        action='store_true',
-        default=False,
-        help="Do not stop if one command fails"
-    )
-    parser.add_argument(
-        'command',
-        nargs='+'
-    )
-    return parser
+
+    def start(self):
+        self.status(AppStatus.RUNNING)
+        # add commands to the pool
+        pool = Pool(self.num_workers)
+        for cc in self.config:
+            cmd = cc.apply(self.args.command)
+            pool.enqueue(self._worker_task, cmd)
+        # start pool
+        pool.run()
+        # monitor the status of the app
+        while (pool.alive() and not pool.idle()) or (not pool.done()):
+            self._update_status()
+            # Status: ABORTING
+            if self.status() == AppStatus.ABORTING:
+                pool.abort()
+            # Status: KILLING
+            if self.status() == AppStatus.KILLING:
+                brlogger.warning('Escalating to KILL...')
+                sys.exit(1)
+            # breath
+            time.sleep(1.0 / APP_HEARTBEAT_HZ)
+        # ---
+        brlogger.info('Done!')
+
+
+    def status(self, status=None):
+        if status and not isinstance(status, AppStatus):
+            raise ValueError(f'Invalid status {status}')
+        if status:
+            self._status = status
+        return self._status
+
+
+    def abort(self):
+        self.status(AppStatus.ABORTING)
+
+
+    def kill(self):
+        self.status(AppStatus.KILLING)
+
+
+    def _update_status(self):
+        # escalate SIGINT -> SIGKILL ater some time
+        s = self._sigint_received_time
+        if s and time.time() - s > ESCALATE_TO_KILL_AFTER_SECS:
+            self.status(AppStatus.KILLING)
+
+
+    def _worker_task(self, cmd, print=False):
+        stdout = subprocess.PIPE if self.is_parallel else sys.stdout
+        cprint(PARALLEL_TO_START_PROMPT_STRING[self.is_parallel].format(" ".join(cmd)))
+        brlogger.debug(f'Running command: {cmd}')
+        if not self.args.dry_run:
+            error = None
+            try:
+                no_sigint = lambda: signal.signal(signal.SIGINT, signal.SIG_IGN)
+                res = subprocess.run(' '.join(cmd), check=True, shell=True, stdout=stdout, preexec_fn=no_sigint)
+                if self.is_parallel and print:
+                    cprint(res.stdout.decode('utf-8'))
+            except subprocess.CalledProcessError as e:
+                error = e
+            if error:
+                if not self.args.ignore_errors:
+                    raise error
+                brlogger.warning(f'The command "{cmd}" failed with error:\n{error}')
+        cprint(PARALLEL_TO_END_PROMPT_STRING[self.is_parallel].format(" ".join(cmd)))
+
+
+    def _setup_signal_handler(self):
+        # create signal handler function
+        def signal_handler(sig, frame):
+            self._sigint_counter += 1
+            if self.status() == AppStatus.INITIALIZING:
+                # just exit if still initializing
+                sys.exit(0)
+            if self.status() == AppStatus.RUNNING:
+                # shutdown app (if running)
+                brlogger.warning(' Request of interruption received. Waiting for tasks to finish...')
+                brlogger.warning(' (Press Ctrl+C three times to force kill)')
+                self.abort()
+            elif self.status() == AppStatus.ABORTING and self._sigint_counter == 3:
+                # kill app if already aborting
+                self.kill()
+        # register signal handler
+        signal.signal(signal.SIGINT, signal_handler)

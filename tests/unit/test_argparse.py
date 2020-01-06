@@ -6,7 +6,7 @@ COMMAND = ['--', 'echo']
 class TestArgparse(unittest.TestCase):
 
     def setUp(self):
-        self.parser = brun.main._get_parser()
+        self.parser = brun.cli.get_parser()
 
     def test_field_empty(self):
         parsed = self.parser.parse_args([] + COMMAND)

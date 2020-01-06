@@ -9,9 +9,11 @@ def default_handler(name, exception, *args, **kwargs):
   print('%s raised %s with args %s and kwargs %s' %  (name, str(exception), repr(args), repr(kwargs)), file=stderr)
   pass
 
-#class for workers
+
+
 class Worker(Thread):
   """Thread executing tasks from a given tasks queue"""
+
   def __init__(self, name, queue, results, abort, idle, exception_handler):
     Thread.__init__(self)
     self.name = name
@@ -34,6 +36,7 @@ class Worker(Thread):
       except:
         #no work to do
         self.idle.set()
+        sleep(0.5)
         continue
 
       try:
@@ -48,9 +51,11 @@ class Worker(Thread):
         #task complete no matter what happened
         self.queue.task_done()
 
-#class for thread pool
+
+
 class Pool:
   """Pool of threads consuming tasks from a queue"""
+
   def __init__(self, thread_count, batch_mode = False, exception_handler = default_handler):
     #batch mode means block when adding tasks if no threads available to process
     self.queue = Queue(thread_count if batch_mode else 0)
@@ -95,10 +100,17 @@ class Pool:
     self.queue.join()
 
   """Tell each worker that its done working"""
-  def abort(self, block = False):
+  def abort(self, block=False):
     #tell the threads to stop after they are done with what they are currently doing
     for a in self.aborts:
       a.set()
+    # clear the queue
+    while not self.queue.empty():
+        try:
+            self.queue.get(False)
+            self.queue.task_done()
+        except:
+            pass
     #wait for them to finish if requested
     while block and self.alive():
       sleep(1)
