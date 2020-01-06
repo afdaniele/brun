@@ -30,6 +30,10 @@ clean:
 uninstall:
 	xargs rm -rf < files.txt
 
+lint:
+format:
+	yapf -r -i -p -vv ${ROOT_DIR}
+
 test:
 	@echo "Running unit tests:"; echo ""
 	@PYTHONPATH="${ROOT_DIR}:$${PYTHONPATH}" \
