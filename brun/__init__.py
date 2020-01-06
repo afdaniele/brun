@@ -1,11 +1,14 @@
 import sys
 from .logger import get_logger
+from .console import Console
 
 __version__ = '0.1.7'
 
+# create console
+brconsole = Console()
 
 # get logger
-brlogger = get_logger()
+brlogger = get_logger(brconsole)
 
 # import CLI entrypoint
 from .cli import run

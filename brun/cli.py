@@ -16,7 +16,6 @@ def run():
     # ---
     # parse arguments
     parsed = parser.parse_args()
-    brlogger.set_debug(parsed.debug)
     # create app and spin it
     app = Brun(parsed)
     app.start()

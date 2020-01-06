@@ -7,11 +7,11 @@ import subprocess
 from enum import Enum
 from threading import Timer
 
-from . import brlogger
+from . import brlogger, brconsole
 from .lib import Config, CLISyntaxError
 from .utils import Pool
 from .constants import *
-
+from .console import restrict_console_access
 
 
 class AppStatus(Enum):
@@ -41,6 +41,9 @@ class Brun():
             brlogger.setLevel(logging.DEBUG)
         if self.args.suppress_warnings and self.args.debug:
             brlogger.info('Warnings cannot be suppressed when --debug is active.')
+        # configure console
+        if not self.args.debug:
+            restrict_console_access(brlogger)
         # turn fields and groups into lists
         if 'field' in self.args:
             self.args.field = [self.args.field] if not isinstance(self.args.field, list) else self.args.field
@@ -74,7 +77,7 @@ class Brun():
         # monitor the status of the app
         while (self.pool.alive() and not self.pool.idle()) or (not self.pool.done()):
             self._update_status()
-            brlogger.step(progress=self._get_progress())
+            brconsole.set_progress(self._get_progress())
             # Status: ABORTING
             if self.status() == AppStatus.ABORTING:
                 self.pool.abort()
@@ -85,7 +88,7 @@ class Brun():
             # breath
             time.sleep(1.0 / APP_HEARTBEAT_HZ)
         # update status bar one more time
-        brlogger.step(progress=self._get_progress())
+        brconsole.set_progress(self._get_progress())
         # ---
         brlogger.info('Done!')
 
@@ -117,8 +120,9 @@ class Brun():
         return self.pool.get_stats()
 
 
-    def _worker_task(self, cmd, print=False):
+    def _worker_task(self, cmd):
         stdout = subprocess.PIPE if self.is_parallel else sys.stdout
+        result = None
         # -->
         brlogger.info(PARALLEL_TO_START_PROMPT_STRING[self.is_parallel].format(" ".join(cmd)))
         brlogger.debug(f'Running command: {cmd}')
@@ -133,18 +137,19 @@ class Brun():
                     stderr=subprocess.PIPE,
                     preexec_fn=no_sigint
                 )
-                if self.is_parallel and print:
-                    brlogger.info(res.stdout.decode('utf-8'))
+                if self.is_parallel:
+                    result = res.stdout.decode('utf-8')
             except subprocess.CalledProcessError as e:
                 brlogger.info(PARALLEL_TO_FAILURE_PROMPT_STRING[self.is_parallel].format(" ".join(cmd)))
                 raise e
         # <--
         brlogger.info(PARALLEL_TO_END_PROMPT_STRING[self.is_parallel].format(" ".join(cmd)))
+        return result
 
 
     def _exception_handler(self, name, exception, *args, **kwargs):
         brlogger.error(
-            '{} raised {} with args {} and kwargs {}'.format(
+            '{} raised "{}" with args {} and kwargs {}'.format(
                 name,
                 str(exception),
                 repr(args),

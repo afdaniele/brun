@@ -164,13 +164,6 @@ class StatisticsCollector():
     def __init__(self):
         self.lock = Semaphore(1)
         self.data = defaultdict(lambda: 0)
-        self.data.update({
-            'tasks_completed': 0,
-            'tasks_failed': 0,
-            'tasks_aborted': 0,
-            'tasks_total': 0,
-            'jobs_max': 0,
-        })
 
     def set(self, key, value):
         self.lock.acquire()
