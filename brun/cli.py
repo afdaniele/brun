@@ -54,16 +54,12 @@ def get_parser():
                         action='store_true',
                         default=False,
                         help="Whether to deamonize the commands")
-    parser.add_argument(
-        '-D',
-        '--dry-run',
-        action='store_true',
-        default=False,
-        help="Performs a dry-run. It shows which commands would run")
-    parser.add_argument('--debug',
+    parser.add_argument('-D',
+                        '--dry-run',
                         action='store_true',
                         default=False,
-                        help="Run in debug mode")
+                        help="Performs a dry-run. It shows which commands would run")
+    parser.add_argument('--debug', action='store_true', default=False, help="Run in debug mode")
     parser.add_argument('--suppress-warnings',
                         action='store_true',
                         default=False,

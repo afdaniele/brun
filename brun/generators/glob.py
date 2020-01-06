@@ -34,5 +34,4 @@ def generate(args):
     filter_type = type_to_fcn_map[type]
     # ---
     glob_query = os.path.join(path, query)
-    return sorted(
-        [os.path.basename(p) for p in glob.glob(glob_query) if filter_type(p)])
+    return sorted([os.path.basename(p) for p in glob.glob(glob_query) if filter_type(p)])

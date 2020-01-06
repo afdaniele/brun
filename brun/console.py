@@ -22,8 +22,7 @@ class ProxyStream(io.TextIOWrapper):
         self._buffer = ""
         self._lock = threading.Semaphore(1)
         self._disabled = False
-        super(ProxyStream, self).__init__(open(os.devnull, 'w'), *args,
-                                          **kwargs)
+        super(ProxyStream, self).__init__(open(os.devnull, 'w'), *args, **kwargs)
 
     def write(self, s, *args, **kwargs):
         if self._disabled:
