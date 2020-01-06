@@ -3,8 +3,8 @@ import brun
 
 COMMAND = ['--', 'echo']
 
-class TestArgparse(unittest.TestCase):
 
+class TestArgparse(unittest.TestCase):
     def setUp(self):
         self.parser = brun.cli.get_parser()
 
@@ -19,8 +19,10 @@ class TestArgparse(unittest.TestCase):
 
     def test_field_multi(self):
         fields = ['x:list:1,2', 'y:list:3,4,5']
-        parsed = self.parser.parse_args(['-f', fields[0], '-f', fields[1]] + COMMAND)
+        parsed = self.parser.parse_args(['-f', fields[0], '-f', fields[1]] +
+                                        COMMAND)
         self.assertEqual(parsed.field, fields)
+
 
 if __name__ == '__main__':
     unittest.main()

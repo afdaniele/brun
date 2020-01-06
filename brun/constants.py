@@ -1,6 +1,5 @@
 import multiprocessing
 
-
 MAX_PARALLEL_WORKERS = multiprocessing.cpu_count()
 
 PARALLEL_TO_START_PROMPT_STRING = {

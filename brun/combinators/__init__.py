@@ -9,6 +9,7 @@ _combinator_map = {
     'zipl': combine_zipl,
 }
 
+
 def _get_combinator(comb_name):
     if not comb_name in _combinator_map:
         msg = f'Grouping strategy "{comb_name}" not found!'

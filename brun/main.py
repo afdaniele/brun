@@ -28,7 +28,6 @@ class Brun():
     _sigint_counter = 0
     _sigint_received_time = None
 
-
     def __init__(self, args):
         self.status(AppStatus.INITIALIZING)
         self._setup_signal_handler()
@@ -40,14 +39,19 @@ class Brun():
         if self.args.debug:
             brlogger.setLevel(logging.DEBUG)
         if self.args.suppress_warnings and self.args.debug:
-            brlogger.info('Warnings cannot be suppressed when --debug is active.')
+            brlogger.info(
+                'Warnings cannot be suppressed when --debug is active.')
         # configure console
         if not self.args.debug:
             restrict_console_access(brlogger)
         # turn fields and groups into lists
         if 'field' in self.args:
-            self.args.field = [self.args.field] if not isinstance(self.args.field, list) else self.args.field
-        self.args.group = [self.args.group] if not isinstance(self.args.group, list) else self.args.group
+            self.args.field = [
+                self.args.field
+            ] if not isinstance(self.args.field, list) else self.args.field
+        self.args.group = [
+            self.args.group
+        ] if not isinstance(self.args.group, list) else self.args.group
         # parse brun configuration
         try:
             self.config = Config(self.args)
@@ -59,12 +63,12 @@ class Brun():
             brlogger.error(str(e))
             exit(-2)
         # define number of workers
-        num_workers = self.args.parallel if self.args.parallel != -1 else len(self.config)
+        num_workers = self.args.parallel if self.args.parallel != -1 else len(
+            self.config)
         num_workers = min(MAX_PARALLEL_WORKERS, max(1, num_workers))
         self.is_parallel = num_workers > 1
         # create workers pool
         self.pool = Pool(num_workers, self._exception_handler)
-
 
     def start(self):
         self.status(AppStatus.RUNNING)
@@ -75,7 +79,8 @@ class Brun():
         # start pool
         self.pool.run()
         # monitor the status of the app
-        while (self.pool.alive() and not self.pool.idle()) or (not self.pool.done()):
+        while (self.pool.alive()
+               and not self.pool.idle()) or (not self.pool.done()):
             self._update_status()
             brconsole.set_progress(self._get_progress())
             # Status: ABORTING
@@ -92,7 +97,6 @@ class Brun():
         # ---
         brlogger.info('Done!')
 
-
     def status(self, status=None):
         if status and not isinstance(status, AppStatus):
             raise ValueError(f'Invalid status {status}')
@@ -100,14 +104,11 @@ class Brun():
             self._status = status
         return self._status
 
-
     def abort(self):
         self.status(AppStatus.ABORTING)
 
-
     def kill(self):
         self.status(AppStatus.KILLING)
-
 
     def _update_status(self):
         # escalate SIGINT -> SIGKILL ater some time
@@ -115,51 +116,44 @@ class Brun():
         if s and time.time() - s > ESCALATE_TO_KILL_AFTER_SECS:
             self.status(AppStatus.KILLING)
 
-
     def _get_progress(self):
         return self.pool.get_stats()
-
 
     def _worker_task(self, cmd):
         stdout = subprocess.PIPE if self.is_parallel else sys.stdout
         result = None
         # -->
-        brlogger.info(PARALLEL_TO_START_PROMPT_STRING[self.is_parallel].format(" ".join(cmd)))
+        brlogger.info(PARALLEL_TO_START_PROMPT_STRING[self.is_parallel].format(
+            " ".join(cmd)))
         brlogger.debug(f'Running command: {cmd}')
         if not self.args.dry_run:
             try:
-                no_sigint = lambda: signal.signal(signal.SIGINT, signal.SIG_IGN)
-                res = subprocess.run(
-                    ' '.join(cmd),
-                    check=True,
-                    shell=True,
-                    stdout=stdout,
-                    stderr=subprocess.PIPE,
-                    preexec_fn=no_sigint
-                )
+                no_sigint = lambda: signal.signal(signal.SIGINT, signal.SIG_IGN
+                                                  )
+                res = subprocess.run(' '.join(cmd),
+                                     check=True,
+                                     shell=True,
+                                     stdout=stdout,
+                                     stderr=subprocess.PIPE,
+                                     preexec_fn=no_sigint)
                 if self.is_parallel:
                     result = res.stdout.decode('utf-8')
             except subprocess.CalledProcessError as e:
-                brlogger.info(PARALLEL_TO_FAILURE_PROMPT_STRING[self.is_parallel].format(" ".join(cmd)))
+                brlogger.info(
+                    PARALLEL_TO_FAILURE_PROMPT_STRING[self.is_parallel].format(
+                        " ".join(cmd)))
                 raise e
         # <--
-        brlogger.info(PARALLEL_TO_END_PROMPT_STRING[self.is_parallel].format(" ".join(cmd)))
+        brlogger.info(PARALLEL_TO_END_PROMPT_STRING[self.is_parallel].format(
+            " ".join(cmd)))
         return result
 
-
     def _exception_handler(self, name, exception, *args, **kwargs):
-        brlogger.error(
-            '{} raised "{}" with args {} and kwargs {}'.format(
-                name,
-                str(exception),
-                repr(args),
-                repr(kwargs)
-            )
-        )
+        brlogger.error('{} raised "{}" with args {} and kwargs {}'.format(
+            name, str(exception), repr(args), repr(kwargs)))
         # abort remaining tasks
         if not self.args.ignore_errors:
             self.abort()
-
 
     def _setup_signal_handler(self):
         # create signal handler function
@@ -170,11 +164,15 @@ class Brun():
                 sys.exit(0)
             if self.status() == AppStatus.RUNNING:
                 # shutdown app (if running)
-                brlogger.warning(' Request of interruption received. Waiting for tasks to finish...')
+                brlogger.warning(
+                    ' Request of interruption received. Waiting for tasks to finish...'
+                )
                 brlogger.warning(' (Press Ctrl+C three times to force kill)')
                 self.abort()
-            elif self.status() == AppStatus.ABORTING and self._sigint_counter == 3:
+            elif self.status(
+            ) == AppStatus.ABORTING and self._sigint_counter == 3:
                 # kill app if already aborting
                 self.kill()
+
         # register signal handler
         signal.signal(signal.SIGINT, signal_handler)

@@ -4,10 +4,11 @@ import glob
 aliases = ['g']
 
 type_to_fcn_map = {
-  '*': lambda e: True,
-  'f': os.path.isfile,
-  'd': os.path.isdir,
+    '*': lambda e: True,
+    'f': os.path.isfile,
+    'd': os.path.isdir,
 }
+
 
 def generate(args):
     args = args[0].split(',')
@@ -28,13 +29,10 @@ def generate(args):
     # ---
     type = '*' if len(args) <= 2 else args[2].strip()
     if type not in type_to_fcn_map:
-      msg = f'Unknown type "{type}" for filter-type argument. Allowed {list(type_to_fcn_map.keys())}'
-      raise ValueError(msg)
+        msg = f'Unknown type "{type}" for filter-type argument. Allowed {list(type_to_fcn_map.keys())}'
+        raise ValueError(msg)
     filter_type = type_to_fcn_map[type]
     # ---
     glob_query = os.path.join(path, query)
-    return sorted([
-      os.path.basename(p)
-      for p in glob.glob(glob_query)
-      if filter_type(p)
-    ])
+    return sorted(
+        [os.path.basename(p) for p in glob.glob(glob_query) if filter_type(p)])

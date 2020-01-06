@@ -1,5 +1,6 @@
 import itertools
 
+
 def combine(lst1, lst2, args):
     if len(args) != 1:
         msg = 'The grouping strategy "zipl" requires a fill argument'

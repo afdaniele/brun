@@ -2,6 +2,7 @@ import sys
 
 aliases = []
 
+
 def generate(args):
     if len(args) > 1:
         msg = 'The field type "stdin" takes one optional argument. i.e., a string delimiter (default=\\n)'
@@ -10,6 +11,8 @@ def generate(args):
     sep = '\n'
     if len(args) > 0:
         sep = args[0].strip()
-    values = [l.strip().replace('\n', ';') for l in sys.stdin.read().split(sep)]
+    values = [
+        l.strip().replace('\n', ';') for l in sys.stdin.read().split(sep)
+    ]
     # ---
     return list(filter(len, values))

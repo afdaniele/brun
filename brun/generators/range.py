@@ -1,5 +1,6 @@
 aliases = ['r']
 
+
 def generate(args):
     if len(args) != 1:
         msg = 'The field type "range" takes a single argument. i.e., a range descriptor'
@@ -24,7 +25,8 @@ def generate(args):
 
 def _extract_format(vals_str):
     args = vals_str + [vals_str[0]]
-    s, f = (args[0], args[1]) if int(args[1]) > int(args[0]) else (args[1], args[0])
+    s, f = (args[0], args[1]) if int(args[1]) > int(args[0]) else (args[1],
+                                                                   args[0])
     if len(s) != len(str(int(s))):
         padding_len = len(s) - len(str(int(s)))
         padding = s[:padding_len]
@@ -34,6 +36,7 @@ def _extract_format(vals_str):
         padding_char = padding[0]
         return "{:%s%sd}" % (padding_char, len(s))
     return "{0}"
+
 
 def _format(lst, fmt):
     return list(map(lambda v: fmt.format(v), lst))

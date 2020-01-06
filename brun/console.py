@@ -16,14 +16,14 @@ def restrict_console_access(logger):
 
 
 class ProxyStream(io.TextIOWrapper):
-
     def __init__(self, logger, level, *args, **kwargs):
         self._logger = logger
         self._level = level
         self._buffer = ""
         self._lock = threading.Semaphore(1)
         self._disabled = False
-        super(ProxyStream, self).__init__(open(os.devnull, 'w'), *args, **kwargs)
+        super(ProxyStream, self).__init__(open(os.devnull, 'w'), *args,
+                                          **kwargs)
 
     def write(self, s, *args, **kwargs):
         if self._disabled:
@@ -38,7 +38,6 @@ class ProxyStream(io.TextIOWrapper):
 
 
 class Console():
-
     def __init__(self):
         # redirect stdout to buffer
         self.start_time = time.time()
@@ -90,7 +89,7 @@ class Console():
             self.uptime(),
             self.progress['tasks_completed'],
             self.progress['tasks_total'],
-            self.progress['jobs_max']-self.progress['jobs_idle'],
+            self.progress['jobs_max'] - self.progress['jobs_idle'],
             self.progress['jobs_max'],
             self.progress['tasks_queued'],
             self.progress['tasks_aborted'],

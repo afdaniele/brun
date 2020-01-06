@@ -8,14 +8,10 @@ from utils import IterableNamespace, get_sandbox
 
 
 class TestConfig(unittest.TestCase):
-
     def _get_config(self, field, group=[]):
         args = lambda a: ','.join([str(e) for e in a])
         field = [':'.join([f[0], f[1], args(f[2])]) for f in field]
-        parsed = IterableNamespace(
-            field=field,
-            group=group
-        )
+        parsed = IterableNamespace(field=field, group=group)
         return brun.lib.Config(parsed)
 
     def test_default_field(self):
@@ -32,24 +28,24 @@ class TestConfig(unittest.TestCase):
             os.chdir(p)
 
     def test_no_group(self):
-        fields = [('x', 'list', [1,2])]
+        fields = [('x', 'list', [1, 2])]
         cfg = self._get_config(fields)
         self.assertEqual(len(fields[0][2]), len(cfg))
 
     def test_default_group(self):
-        fields = [('x', 'list', [1,2]), ('y', 'list', [3,4,5])]
+        fields = [('x', 'list', [1, 2]), ('y', 'list', [3, 4, 5])]
         cfg = self._get_config(fields)
-        prod = reduce(lambda p, n: p*n, [len(f[2]) for f in fields])
+        prod = reduce(lambda p, n: p * n, [len(f[2]) for f in fields])
         self.assertEqual(prod, len(cfg))
 
     def test_command_single_field(self):
-        fields = [('x', 'list', [1,2])]
+        fields = [('x', 'list', [1, 2])]
         command = 'echo {x}'
         commands1, commands2 = _get_commands(self, fields, command)
         self.assertEqual(commands1, commands2)
 
     def test_command_multi_field(self):
-        fields = [('x', 'list', [1,2]), ('y', 'list', [3,4,5])]
+        fields = [('x', 'list', [1, 2]), ('y', 'list', [3, 4, 5])]
         command = 'echo {x}:{y}'
         commands1, commands2 = _get_commands(self, fields, command)
         self.assertEqual(commands1, commands2)
