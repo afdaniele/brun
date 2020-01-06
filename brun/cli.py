@@ -2,6 +2,7 @@ import sys
 import argparse
 
 from .main import Brun
+from . import __version__
 
 
 def run():
