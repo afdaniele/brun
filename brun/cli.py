@@ -9,7 +9,8 @@ def run():
     parser = get_parser()
     # ---
     # version
-    if '-v' in sys.argv[1:] or '--version' in sys.argv[1:]:
+    f = sys.argv.index('--') if '--' in sys.argv else len(sys.argv)
+    if '-v' in sys.argv[1:f] or '--version' in sys.argv[1:f]:
         print(f'brun version {__version__}\n')
         exit(0)
     # ---
