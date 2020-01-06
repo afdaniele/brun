@@ -6,13 +6,6 @@ from collections import defaultdict
 from copy import copy
 
 
-#default exception handler. if you want to take some action on failed tasks
-#maybe add the task back into the queue, then make your own handler and pass it in
-def default_handler(name, exception, *args, **kwargs):
-  print('%s raised %s with args %s and kwargs %s' %  (name, str(exception), repr(args), repr(kwargs)), file=stderr)
-  pass
-
-
 
 class Worker(Thread):
   """Thread executing tasks from a given tasks queue"""
@@ -62,10 +55,10 @@ class Worker(Thread):
 class Pool:
   """Pool of threads consuming tasks from a queue"""
 
-  def __init__(self, thread_count, batch_mode = False, exception_handler = default_handler):
+  def __init__(self, thread_count, exception_handler):
     #batch mode means block when adding tasks if no threads available to process
-    self.queue = Queue(thread_count if batch_mode else 0)
-    self.resultQueue = Queue(0)
+    self.queue = Queue()
+    self.resultQueue = Queue()
     self.thread_count = thread_count
     self.exception_handler = exception_handler
     self.stats = StatisticsCollector()

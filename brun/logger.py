@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import logging
@@ -8,20 +9,29 @@ from queue import Queue
 
 
 def get_logger():
-    logging.basicConfig()
     # create logger
+    logging.basicConfig()
     logger = BrLogger('brun', logging.INFO)
     return logger
 
 
 class BrLogger(logging.Logger):
 
-    def __init__(self, name, level=logging.NOTSET):
+    def __init__(self, name, level=logging.NOTSET, debug=None):
         super(BrLogger, self).__init__(name, level)
+        # redirect stdout to buffer
+        self.stdout = sys.stdout
         self.buffer = Queue()
         self.lock = threading.Semaphore(1)
         self.delete_last = False
         self.stime = time.time()
+        self.set_debug(debug)
+
+    def set_debug(self, debug):
+        if isinstance(debug, bool) and not debug:
+            sys.stdout = open(os.devnull, 'w')
+            sys.stderr = open(os.devnull, 'w')
+        self.is_debug = debug
 
     def _log(self, lvl, msg, *args, **kwargs):
         # build message
@@ -49,17 +59,16 @@ class BrLogger(logging.Logger):
         # clear last line
         if self.delete_last:
             # clear 2 lines
-            sys.stdout.write("\033[F\033[K" + "\033[F\033[K")
-        sys.stdout.flush()
+            self.stdout.write("\033[F\033[K" + "\033[F\033[K")
         # dump buffer content on the console
         while not self.buffer.empty():
             line = self.buffer.get()
-            sys.stdout.write(line + "\033[K" + "\n")
-            sys.stdout.flush()
+            self.stdout.write(line + "\033[K" + "\n")
         # print separator then status bar
-        sys.stdout.write(("-" * 80) + "\n")
-        sys.stdout.write(self.status_bar(progress) + "\n")
-        sys.stdout.flush()
+        self.stdout.write(("-" * 80) + "\n")
+        self.stdout.write(self.status_bar(progress) + "\n")
+        # flush stdout
+        self.stdout.flush()
         self.delete_last = True
         # release the lock
         self.lock.release()

@@ -2,7 +2,7 @@ import sys
 import argparse
 
 from .main import Brun
-from . import __version__
+from . import brlogger, __version__
 
 
 def run():
@@ -16,6 +16,7 @@ def run():
     # ---
     # parse arguments
     parsed = parser.parse_args()
+    brlogger.set_debug(parsed.debug)
     # create app and spin it
     app = Brun(parsed)
     app.start()

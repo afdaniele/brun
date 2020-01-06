@@ -60,7 +60,7 @@ class Brun():
         num_workers = min(MAX_PARALLEL_WORKERS, max(1, num_workers))
         self.is_parallel = num_workers > 1
         # create workers pool
-        self.pool = Pool(num_workers)
+        self.pool = Pool(num_workers, self._exception_handler)
 
 
     def start(self):
@@ -119,22 +119,41 @@ class Brun():
 
     def _worker_task(self, cmd, print=False):
         stdout = subprocess.PIPE if self.is_parallel else sys.stdout
+        # -->
         brlogger.info(PARALLEL_TO_START_PROMPT_STRING[self.is_parallel].format(" ".join(cmd)))
         brlogger.debug(f'Running command: {cmd}')
         if not self.args.dry_run:
-            error = None
             try:
                 no_sigint = lambda: signal.signal(signal.SIGINT, signal.SIG_IGN)
-                res = subprocess.run(' '.join(cmd), check=True, shell=True, stdout=stdout, preexec_fn=no_sigint)
+                res = subprocess.run(
+                    ' '.join(cmd),
+                    check=True,
+                    shell=True,
+                    stdout=stdout,
+                    stderr=subprocess.PIPE,
+                    preexec_fn=no_sigint
+                )
                 if self.is_parallel and print:
                     brlogger.info(res.stdout.decode('utf-8'))
             except subprocess.CalledProcessError as e:
-                error = e
-            if error:
-                if not self.args.ignore_errors:
-                    raise error
-                brlogger.warning(f'The command "{cmd}" failed with error:\n{error}')
+                brlogger.info(PARALLEL_TO_FAILURE_PROMPT_STRING[self.is_parallel].format(" ".join(cmd)))
+                raise e
+        # <--
         brlogger.info(PARALLEL_TO_END_PROMPT_STRING[self.is_parallel].format(" ".join(cmd)))
+
+
+    def _exception_handler(self, name, exception, *args, **kwargs):
+        brlogger.error(
+            '{} raised {} with args {} and kwargs {}'.format(
+                name,
+                str(exception),
+                repr(args),
+                repr(kwargs)
+            )
+        )
+        # abort remaining tasks
+        if not self.args.ignore_errors:
+            self.abort()
 
 
     def _setup_signal_handler(self):
