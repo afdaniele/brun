@@ -7,7 +7,7 @@ import subprocess
 from enum import Enum
 from threading import Timer
 
-from . import brlogger, cprint
+from . import brlogger
 from .lib import Config, CLISyntaxError
 from .utils import Pool
 from .constants import *
@@ -57,31 +57,35 @@ class Brun():
             exit(-2)
         # define number of workers
         num_workers = self.args.parallel if self.args.parallel != -1 else len(self.config)
-        self.num_workers = min(MAX_PARALLEL_WORKERS, max(1, num_workers))
+        num_workers = min(MAX_PARALLEL_WORKERS, max(1, num_workers))
         self.is_parallel = num_workers > 1
+        # create workers pool
+        self.pool = Pool(num_workers)
 
 
     def start(self):
         self.status(AppStatus.RUNNING)
         # add commands to the pool
-        pool = Pool(self.num_workers)
         for cc in self.config:
             cmd = cc.apply(self.args.command)
-            pool.enqueue(self._worker_task, cmd)
+            self.pool.enqueue(self._worker_task, cmd)
         # start pool
-        pool.run()
+        self.pool.run()
         # monitor the status of the app
-        while (pool.alive() and not pool.idle()) or (not pool.done()):
+        while (self.pool.alive() and not self.pool.idle()) or (not self.pool.done()):
             self._update_status()
+            brlogger.step(progress=self._get_progress())
             # Status: ABORTING
             if self.status() == AppStatus.ABORTING:
-                pool.abort()
+                self.pool.abort()
             # Status: KILLING
             if self.status() == AppStatus.KILLING:
                 brlogger.warning('Escalating to KILL...')
                 sys.exit(1)
             # breath
             time.sleep(1.0 / APP_HEARTBEAT_HZ)
+        # update status bar one more time
+        brlogger.step(progress=self._get_progress())
         # ---
         brlogger.info('Done!')
 
@@ -109,9 +113,13 @@ class Brun():
             self.status(AppStatus.KILLING)
 
 
+    def _get_progress(self):
+        return self.pool.get_stats()
+
+
     def _worker_task(self, cmd, print=False):
         stdout = subprocess.PIPE if self.is_parallel else sys.stdout
-        cprint(PARALLEL_TO_START_PROMPT_STRING[self.is_parallel].format(" ".join(cmd)))
+        brlogger.info(PARALLEL_TO_START_PROMPT_STRING[self.is_parallel].format(" ".join(cmd)))
         brlogger.debug(f'Running command: {cmd}')
         if not self.args.dry_run:
             error = None
@@ -119,14 +127,14 @@ class Brun():
                 no_sigint = lambda: signal.signal(signal.SIGINT, signal.SIG_IGN)
                 res = subprocess.run(' '.join(cmd), check=True, shell=True, stdout=stdout, preexec_fn=no_sigint)
                 if self.is_parallel and print:
-                    cprint(res.stdout.decode('utf-8'))
+                    brlogger.info(res.stdout.decode('utf-8'))
             except subprocess.CalledProcessError as e:
                 error = e
             if error:
                 if not self.args.ignore_errors:
                     raise error
                 brlogger.warning(f'The command "{cmd}" failed with error:\n{error}')
-        cprint(PARALLEL_TO_END_PROMPT_STRING[self.is_parallel].format(" ".join(cmd)))
+        brlogger.info(PARALLEL_TO_END_PROMPT_STRING[self.is_parallel].format(" ".join(cmd)))
 
 
     def _setup_signal_handler(self):

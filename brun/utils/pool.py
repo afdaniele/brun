@@ -1,7 +1,10 @@
 from queue import Queue
-from threading import Thread, Event
+from threading import Thread, Event, Semaphore
 from sys import stdout, stderr
 from time import sleep
+from collections import defaultdict
+from copy import copy
+
 
 #default exception handler. if you want to take some action on failed tasks
 #maybe add the task back into the queue, then make your own handler and pass it in
@@ -14,7 +17,7 @@ def default_handler(name, exception, *args, **kwargs):
 class Worker(Thread):
   """Thread executing tasks from a given tasks queue"""
 
-  def __init__(self, name, queue, results, abort, idle, exception_handler):
+  def __init__(self, name, queue, results, abort, idle, exception_handler, stats):
     Thread.__init__(self)
     self.name = name
     self.queue = queue
@@ -22,6 +25,7 @@ class Worker(Thread):
     self.abort = abort
     self.idle = idle
     self.exception_handler = exception_handler
+    self.stats = stats
     self.daemon = True
     self.start()
 
@@ -42,10 +46,12 @@ class Worker(Thread):
       try:
         #the function may raise
         result = func(*args, **kwargs)
+        self.stats.increase('tasks_completed')
         if(result is not None):
           self.results.put(result)
       except Exception as e:
         #so we move on and handle it in whatever way the caller wanted
+        self.stats.increase('tasks_failed')
         self.exception_handler(self.name, e, args, kwargs)
       finally:
         #task complete no matter what happened
@@ -62,6 +68,7 @@ class Pool:
     self.resultQueue = Queue(0)
     self.thread_count = thread_count
     self.exception_handler = exception_handler
+    self.stats = StatisticsCollector()
     self.aborts = []
     self.idles = []
     self.threads = []
@@ -77,7 +84,7 @@ class Pool:
       while self.alive():
         sleep(1)
     elif self.alive():
-        return False
+      return False
 
     #go start them
     self.aborts = []
@@ -88,12 +95,13 @@ class Pool:
       idle = Event()
       self.aborts.append(abort)
       self.idles.append(idle)
-      self.threads.append(Worker('thread-%d' % n, self.queue, self.resultQueue, abort, idle, self.exception_handler))
+      self.threads.append(Worker('thread-%d' % n, self.queue, self.resultQueue, abort, idle, self.exception_handler, self.stats))
     return True
 
   """Add a task to the queue"""
   def enqueue(self, func, *args, **kargs):
     self.queue.put((func, args, kargs))
+    self.stats.increase('tasks_total')
 
   """Wait for completion of all the tasks in the queue"""
   def join(self):
@@ -106,11 +114,12 @@ class Pool:
       a.set()
     # clear the queue
     while not self.queue.empty():
-        try:
-            self.queue.get(False)
-            self.queue.task_done()
-        except:
-            pass
+      try:
+        self.queue.get(False)
+        self.queue.task_done()
+        self.stats.increase('tasks_aborted')
+      except:
+        pass
     #wait for them to finish if requested
     while block and self.alive():
       sleep(1)
@@ -143,7 +152,50 @@ class Pool:
   """Wait for the pool to complete and return the results as soon as they are ready"""
   def iterate_results(self):
     while not self.done() or not self.idle():
-        for r in self.results():
-            yield r
-    for r in self.results():
+      for r in self.results():
         yield r
+    for r in self.results():
+      yield r
+
+  def get_stats(self):
+    stats = self.stats.get_stats()
+    stats['jobs_idle'] = len([1 for i in self.idles if i.is_set()])
+    stats['jobs_max'] = len([1 for t in self.threads if t.is_alive()])
+    stats['tasks_queued'] = self.queue.qsize()
+    return stats
+
+
+
+class StatisticsCollector():
+
+    def __init__(self):
+        self.lock = Semaphore(1)
+        self.data = defaultdict(lambda: 0)
+        self.data.update({
+            'tasks_completed': 0,
+            'tasks_failed': 0,
+            'tasks_aborted': 0,
+            'tasks_total': 0,
+            'jobs_max': 0,
+        })
+
+    def set(self, key, value):
+        self.lock.acquire()
+        self.data[key] = value
+        self.lock.release()
+
+    def increase(self, key):
+        self.lock.acquire()
+        self.data[key] += 1
+        self.lock.release()
+
+    def decrease(self, key):
+        self.lock.acquire()
+        self.data[key] -= 1
+        self.lock.release()
+
+    def get_stats(self):
+        self.lock.acquire()
+        stats = copy(self.data)
+        self.lock.release()
+        return stats
