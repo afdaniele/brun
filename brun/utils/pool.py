@@ -8,8 +8,7 @@ from copy import copy
 
 class Worker(Thread):
     """Thread executing tasks from a given tasks queue"""
-    def __init__(self, name, queue, results, abort, idle, exception_handler,
-                 stats):
+    def __init__(self, name, queue, results, abort, idle, exception_handler, stats):
         Thread.__init__(self)
         self.name = name
         self.queue = queue
@@ -89,8 +88,8 @@ class Pool:
             self.aborts.append(abort)
             self.idles.append(idle)
             self.threads.append(
-                Worker('thread-%d' % n, self.queue, self.resultQueue, abort,
-                       idle, self.exception_handler, self.stats))
+                Worker('thread-%d' % n, self.queue, self.resultQueue, abort, idle,
+                       self.exception_handler, self.stats))
         return True
 
     """Add a task to the queue"""

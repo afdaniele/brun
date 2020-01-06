@@ -106,9 +106,7 @@ class TestGenerators(unittest.TestCase):
     def test_gen_glob_pathonly_fulldir(self):
         gen = self._get_generator('glob')
         dirpath = get_sandbox(1)
-        expected_output = [
-            'd0', 'd1', 'd2', 'f0.ini', 'f1.txt', 'f2.txt', 'f3.dat'
-        ]
+        expected_output = ['d0', 'd1', 'd2', 'f0.ini', 'f1.txt', 'f2.txt', 'f3.dat']
         self.assertEqual(expected_output, gen([dirpath]))
 
     def test_gen_glob_path_and_query_1(self):
@@ -135,18 +133,14 @@ class TestGenerators(unittest.TestCase):
     def test_gen_glob_allargs_test_defaults_1(self):
         gen = self._get_generator('glob')
         dirpath = get_sandbox(1)
-        expected_output = [
-            'd0', 'd1', 'd2', 'f0.ini', 'f1.txt', 'f2.txt', 'f3.dat'
-        ]
+        expected_output = ['d0', 'd1', 'd2', 'f0.ini', 'f1.txt', 'f2.txt', 'f3.dat']
         args = '{},{}'.format(dirpath, '*')
         self.assertEqual(expected_output, gen([args]))
 
     def test_gen_glob_allargs_test_defaults_2(self):
         gen = self._get_generator('glob')
         dirpath = get_sandbox(1)
-        expected_output = [
-            'd0', 'd1', 'd2', 'f0.ini', 'f1.txt', 'f2.txt', 'f3.dat'
-        ]
+        expected_output = ['d0', 'd1', 'd2', 'f0.ini', 'f1.txt', 'f2.txt', 'f3.dat']
         args = '{},{},{}'.format(dirpath, '*', '*')
         self.assertEqual(expected_output, gen([args]))
 
@@ -234,11 +228,7 @@ class TestGenerators(unittest.TestCase):
     def test_gen_json_multikeyinput_file(self):
         gen = self._get_generator('json')
         dirpath = get_sandbox_object(2, 'j8.json')
-        expected_output = {
-            'key1': [1, 11, 21],
-            'key2': [2, 12, 22],
-            'key3': [3, 13, 23]
-        }
+        expected_output = {'key1': [1, 11, 21], 'key2': [2, 12, 22], 'key3': [3, 13, 23]}
         self.assertEqual(expected_output, gen([dirpath]))
 
 

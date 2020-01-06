@@ -11,8 +11,6 @@ def generate(args):
     sep = '\n'
     if len(args) > 0:
         sep = args[0].strip()
-    values = [
-        l.strip().replace('\n', ';') for l in sys.stdin.read().split(sep)
-    ]
+    values = [l.strip().replace('\n', ';') for l in sys.stdin.read().split(sep)]
     # ---
     return list(filter(len, values))

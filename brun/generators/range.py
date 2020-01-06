@@ -25,8 +25,7 @@ def generate(args):
 
 def _extract_format(vals_str):
     args = vals_str + [vals_str[0]]
-    s, f = (args[0], args[1]) if int(args[1]) > int(args[0]) else (args[1],
-                                                                   args[0])
+    s, f = (args[0], args[1]) if int(args[1]) > int(args[0]) else (args[1], args[0])
     if len(s) != len(str(int(s))):
         padding_len = len(s) - len(str(int(s)))
         padding = s[:padding_len]

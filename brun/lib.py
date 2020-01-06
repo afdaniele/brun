@@ -36,14 +36,12 @@ class Config(object):
         self._fields = dict()
         # use default field if none were given
         if 'field' not in parsed:
-            default_json_input_file = os.path.join(os.getcwd(),
-                                                   DEFAULT_FIELD[2])
+            default_json_input_file = os.path.join(os.getcwd(), DEFAULT_FIELD[2])
             if os.path.exists(default_json_input_file):
                 parsed.field = [':'.join(DEFAULT_FIELD)]
             else:
                 raise CLISyntaxError(
-                    "Argument --field/-f is required when the file '.brun' does not exist."
-                )
+                    "Argument --field/-f is required when the file '.brun' does not exist.")
         # parse fields and create their data points
         for field_str in parsed.field:
             # parse field
@@ -72,27 +70,21 @@ class Config(object):
         # parse groups
         for group_str in parsed.group:
             # parse group
-            type, fields, combinator_args = _parse_group(
-                group_str, self._fields_keys)
+            type, fields, combinator_args = _parse_group(group_str, self._fields_keys)
             # fill in the combination map
             for f1, f2 in itertools.product(fields, fields):
                 combination_map[(f1, f2)] = (type, combinator_args)
         # combine fields
         # 1. create one blob for each field
-        field_to_blob = {
-            f: i
-            for f, i in zip(self._fields_keys, range(len(self._fields_keys)))
-        }
+        field_to_blob = {f: i for f, i in zip(self._fields_keys, range(len(self._fields_keys)))}
         blobs = [[(v, ) for v in self._fields[f]] for f in self._fields_keys]
         # 2. combine blobs
         for f0, f1 in zip(self._fields_keys, self._fields_keys[1:]):
             next_blob_id = len(blobs)
-            type, combinator_args = _get_blob_combinator(
-                self._fields_keys, combination_map, f1)
+            type, combinator_args = _get_blob_combinator(self._fields_keys, combination_map, f1)
             combinator = _get_combinator(type)
             blob0, blob1 = blobs[field_to_blob[f0]], blobs[field_to_blob[f1]]
-            blobs.append(
-                _flatten_data(combinator(blob0, blob1, combinator_args)))
+            blobs.append(_flatten_data(combinator(blob0, blob1, combinator_args)))
             field_to_blob[f0] = next_blob_id
             field_to_blob[f1] = next_blob_id
         data = blobs[-1] if blobs else []
@@ -118,9 +110,7 @@ def _parse_field(field_str):
     name, type, *generator_args = parts
     # validate field name
     if not re.search('\w+', name):
-        raise CLISyntaxError(
-            f'Field name {name} not valid. Only letters and numbers are allowed'
-        )
+        raise CLISyntaxError(f'Field name {name} not valid. Only letters and numbers are allowed')
     # ---
     return name, type, generator_args
 
