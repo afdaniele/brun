@@ -1,5 +1,6 @@
 import sys
 import time
+import types
 import signal
 import logging
 import subprocess
@@ -12,6 +13,7 @@ from .lib import Config, CLISyntaxError
 from .utils import Pool
 from .constants import *
 from .console import restrict_console_access
+from .exceptions import TaskFailureError
 
 
 class AppStatus(Enum):
@@ -43,12 +45,14 @@ class Brun():
         # configure console
         if not self.args.debug:
             restrict_console_access(brlogger)
+        brconsole.set_show_status(not self.args.no_status)
+        brconsole.set_plain_console(self.args.debug)
         # turn fields and groups into lists
         if 'field' in self.args:
-            self.args.field = [self.args.field
-                               ] if not isinstance(self.args.field, list) else self.args.field
-        self.args.group = [self.args.group
-                           ] if not isinstance(self.args.group, list) else self.args.group
+            self.args.field = [self.args.field] \
+                if not isinstance(self.args.field, list) else self.args.field
+        self.args.group = [self.args.group] \
+            if not isinstance(self.args.group, list) else self.args.group
         # parse brun configuration
         try:
             self.config = Config(self.args)
@@ -87,10 +91,14 @@ class Brun():
                 sys.exit(1)
             # breath
             time.sleep(1.0 / APP_HEARTBEAT_HZ)
-        # update status bar one more time
+        # update status bar one more time and then stop it
         brconsole.set_progress(self._get_progress())
+        brconsole.set_show_status(False)
+        # show collected errors
+        self._process_tasks_output(stderr_only=(not self.args.verbose))
         # ---
         brlogger.info('Done!')
+        brconsole.flush()
 
     def status(self, status=None):
         if status and not isinstance(status, AppStatus):
@@ -111,37 +119,70 @@ class Brun():
         if s and time.time() - s > ESCALATE_TO_KILL_AFTER_SECS:
             self.status(AppStatus.KILLING)
 
+    def _process_tasks_output(self, stderr_only=False):
+        cmds = []
+        stdouts = []
+        stderrs = []
+        # get cmd, stdout, and stderr
+        for res in self.pool.results():
+            cmd = ' '.join(res.cmd)
+            cmds.append(cmd)
+            stdouts.append(res.stdout)
+            stderrs.append(res.stderr)
+        # dump stdout to console
+        if not stderr_only:
+            for cmd, std in zip(cmds, stdouts):
+                if len(std):
+                    brconsole.write(TASK_OUTPUT_TEMPLATE.format(
+                        cmd=cmd, content=std.rstrip()
+                    ))
+        # dump stderr to console
+        for cmd, std in zip(cmds, stderrs):
+            if len(std):
+                brconsole.write(TASK_ERROR_TEMPLATE.format(
+                    cmd=cmd, content=std.rstrip()
+                ))
+
     def _get_progress(self):
-        return self.pool.get_stats()
+        stats = self.pool.get_stats()
+        stats['app_status'] = {
+            AppStatus.INITIALIZING: 'init',
+            AppStatus.RUNNING: 'healthy',
+            AppStatus.ABORTING: 'aborting',
+            AppStatus.KILLING: 'killing'
+        }[self.status()]
+        return stats
 
     def _worker_task(self, cmd):
         cmd_str = ' '.join(cmd)
         stdout = subprocess.PIPE if self.is_parallel else sys.stdout
-        result = None
+        result = types.SimpleNamespace(cmd=cmd, stdout="", stderr="")
         # -->
         brlogger.info(PARALLEL_TO_START_PROMPT_STRING[self.is_parallel].format(cmd_str))
-        brlogger.debug(f'Running command: {cmd}')
         if not self.args.dry_run:
-            try:
-                no_sigint = lambda: signal.signal(signal.SIGINT, signal.SIG_IGN)
-                res = subprocess.run(cmd_str,
-                                     check=True,
-                                     shell=True,
-                                     stdout=stdout,
-                                     stderr=subprocess.PIPE,
-                                     preexec_fn=no_sigint)
-                if self.is_parallel:
-                    result = res.stdout.decode('utf-8')
-            except subprocess.CalledProcessError as e:
+            no_sigint = lambda: signal.signal(signal.SIGINT, signal.SIG_IGN)
+            # launch task
+            task = subprocess.Popen(cmd_str,
+                                    shell=True,
+                                    stdout=stdout,
+                                    stderr=subprocess.PIPE,
+                                    preexec_fn=no_sigint)
+            # wait for the task to end
+            task.wait()
+            if self.is_parallel:
+                result.stdout = task.stdout.read().decode('utf-8')
+            result.stderr = task.stderr.read().decode('utf-8')
+            # on failure
+            if task.returncode != 0:
                 brlogger.info(PARALLEL_TO_FAILURE_PROMPT_STRING[self.is_parallel].format(cmd_str))
-                raise e
+                # raise error
+                msg = 'The command {} failed with exit code {}.'
+                raise TaskFailureError(msg.format(cmd, task.returncode), result)
         # <--
         brlogger.info(PARALLEL_TO_END_PROMPT_STRING[self.is_parallel].format(cmd_str))
         return result
 
-    def _exception_handler(self, name, exception, *args, **kwargs):
-        brlogger.error('{} raised "{}" with args {} and kwargs {}'.format(
-            name, str(exception), repr(args), repr(kwargs)))
+    def _exception_handler(self, name, exception_type, exception, tback, *args, **kwargs):
         # abort remaining tasks
         if not self.args.ignore_errors:
             self.abort()

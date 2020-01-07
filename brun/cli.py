@@ -28,13 +28,12 @@ def get_parser():
                         action='append',
                         default=argparse.SUPPRESS,
                         help="Specify a field (syntax: 'name:type[:args]')")
-    parser.add_argument(
-        '-g',
-        '--group',
-        action='append',
-        default=['cross:*,*'],
-        help=
-        "Group two or more fields together according to a combination strategy (syntax: 'strategy:field1,field2[,...]')"
+    parser.add_argument('-g',
+                        '--group',
+                        action='append',
+                        default=['cross:*,*'],
+                        help=
+                        "Group two or more fields together according to a combination strategy (syntax: 'strategy:field1,field2[,...]')"
     )
     parser.add_argument('-p',
                         '--parallel',
@@ -49,17 +48,18 @@ def get_parser():
                         action='store_true',
                         default=False,
                         help="Whether to run the commands in interactive mode")
-    parser.add_argument('-d',
-                        '--daemon',
-                        action='store_true',
-                        default=False,
-                        help="Whether to deamonize the commands")
     parser.add_argument('-D',
                         '--dry-run',
                         action='store_true',
                         default=False,
                         help="Performs a dry-run. It shows which commands would run")
     parser.add_argument('--debug', action='store_true', default=False, help="Run in debug mode")
+    parser.add_argument('-vv',
+                        '--verbose',
+                        dest='verbose',
+                        action='store_true',
+                        default=False,
+                        help="Run in verbose mode")
     parser.add_argument('--suppress-warnings',
                         action='store_true',
                         default=False,
@@ -69,5 +69,9 @@ def get_parser():
                         action='store_true',
                         default=False,
                         help="Do not stop if one command fails")
+    parser.add_argument('--no-status',
+                        action='store_true',
+                        default=False,
+                        help="Do not show the status bar")
     parser.add_argument('command', nargs='+')
     return parser

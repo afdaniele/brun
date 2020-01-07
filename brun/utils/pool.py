@@ -1,9 +1,14 @@
 from queue import Queue
 from threading import Thread, Event, Semaphore
-from sys import stdout, stderr
+from sys import stdout, stderr, exc_info
 from time import sleep
 from collections import defaultdict
 from copy import copy
+
+import traceback
+
+from brun import brlogger
+from brun.exceptions import TaskFailureError
 
 
 class Worker(Thread):
@@ -41,10 +46,20 @@ class Worker(Thread):
                 self.stats.increase('tasks_completed')
                 if (result is not None):
                     self.results.put(result)
-            except Exception as e:
+            except TaskFailureError:
+                # get info about the error
+                ex_type, ex, tb = exc_info()
+                # get partial results and errors
+                result = ex.result
+                if (result is not None):
+                    self.results.put(result)
                 #so we move on and handle it in whatever way the caller wanted
                 self.stats.increase('tasks_failed')
-                self.exception_handler(self.name, e, args, kwargs)
+                self.exception_handler(self.name, ex_type, ex, tb, args, kwargs)
+            except:
+                ex_type, ex, tb = exc_info()
+                self.stats.increase('tasks_failed')
+                traceback.print_exception(ex_type, ex, tb, file=sys.stderr)
             finally:
                 #task complete no matter what happened
                 self.queue.task_done()
@@ -112,8 +127,10 @@ class Pool:
         # clear the queue
         while not self.queue.empty():
             try:
-                self.queue.get(False)
+                _, args, _ = self.queue.get(False)
+                cmd, *_ = args
                 self.queue.task_done()
+                brlogger.info(':brun: Aborted < {0}'.format(' '.join(cmd)))
                 self.stats.increase('tasks_aborted')
             except:
                 pass

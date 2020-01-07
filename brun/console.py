@@ -46,6 +46,7 @@ class Console():
         self.progress = defaultdict(lambda: 0)
         self.delete_last = False
         self.show_status = True
+        self.plain_console = False
 
     def set_progress(self, progress):
         self.progress.update(progress)
@@ -53,6 +54,12 @@ class Console():
 
     def uptime(self):
         return time.time() - self.start_time
+
+    def set_show_status(self, val):
+        self.show_status = val
+
+    def set_plain_console(self, val):
+        self.plain_console = val
 
     def write(self, msg):
         # get the lock
@@ -66,7 +73,7 @@ class Console():
         # get the lock
         self.lock.acquire()
         # clear last line
-        if self.show_status and self.delete_last:
+        if self.show_status and self.delete_last and (not self.plain_console):
             # clear 2 lines
             self.stdout.write("\033[F\033[K" * 2)
         # dump buffer content on the console
@@ -84,8 +91,9 @@ class Console():
         self.lock.release()
 
     def _status_bar(self):
-        return "[brun {:.1f} s] [{:d}/{:d} complete] [{:d}/{:d} jobs] [{:d} queued] [{:d} aborted] [{:d} failed]".format(
+        return "[brun {:.1f} s] [{:s}] [{:d}/{:d} complete] [{:d}/{:d} jobs] [{:d} queued] [{:d} aborted] [{:d} failed]".format(
             self.uptime(),
+            self.progress['app_status'],
             self.progress['tasks_completed'],
             self.progress['tasks_total'],
             self.progress['jobs_max'] - self.progress['jobs_idle'],
