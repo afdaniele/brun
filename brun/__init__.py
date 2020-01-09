@@ -2,7 +2,7 @@ import sys
 from .logger import get_logger
 from .console import Console
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 # create console
 brconsole = Console()
