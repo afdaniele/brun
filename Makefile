@@ -1,4 +1,5 @@
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+PART=patch
 
 all:
 
@@ -9,7 +10,7 @@ bump-upload:
 	$(MAKE) test bump upload
 
 bump:
-	bumpversion patch
+	bumpversion ${PART}
 
 upload:
 	git push --tags
