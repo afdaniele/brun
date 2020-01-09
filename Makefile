@@ -31,15 +31,21 @@ clean:
 uninstall:
 	xargs rm -rf < files.txt
 
-lint:
 format:
 	yapf -r -i -p -vv ${ROOT_DIR}
 
 test:
+	$(MAKE) test-unit
+	$(MAKE) -f ${ROOT_DIR}/tests/distribution/Makefile test-all
+
+test-unit:
+	$(MAKE) test-one-unit TEST="test_*"
+
+test-one-unit:
 	@echo "Running unit tests:"; echo ""
 	@PYTHONPATH="${ROOT_DIR}:$${PYTHONPATH}" \
 		python3 \
 			-m unittest discover \
 			--verbose \
 			-s "${ROOT_DIR}/tests/unit" \
-			-p "test_*.py"
+			-p "${TEST}.py"
