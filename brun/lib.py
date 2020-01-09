@@ -1,9 +1,10 @@
 import os
 import re
 import itertools
+import networkx as nx
 
 from . import brlogger
-from .exceptions import CLISyntaxError
+from .exceptions import CLISyntaxError, InvalidConfigurationError
 from .generators import _get_generator
 from .combinators import _get_combinator
 from .constants import *
@@ -58,36 +59,40 @@ class Config(object):
                 # fields that are generated together are naturally grouped using zip
                 keys = list(values.keys())
                 for k0, k1 in zip(keys, keys[1:]):
-                    parsed.group.append(f'zip:{k0},{k1}')
+                    parsed.group.append('zip:{},{}'.format(k0, k1))
             else:
                 self._fields[name] = values
         self._fields_keys = sorted(list(self._fields.keys()))
-        # default combination strategy is 'cross'
-        combination_map = {
-            k: ('default', None)
-            for k in itertools.product(self._fields_keys, self._fields_keys)
-        }
+        # create fields graph
+        G = nx.Graph()
+        # add nodes
+        G.add_nodes_from(self._fields_keys)
         # parse groups
         for group_str in parsed.group:
             # parse group
             type, fields, combinator_args = _parse_group(group_str, self._fields_keys)
-            # fill in the combination map
-            for f1, f2 in itertools.product(fields, fields):
-                combination_map[(f1, f2)] = (type, combinator_args)
+            # add edges
+            for f0, f1 in zip(fields, fields[1:]):
+                G.add_edge(f0, f1, type=type, args=combinator_args)
+        # make sure the graph is consistent
+        head, tail = _complete_graph(G)
+        if not head:
+            return
+        # get path from head to tail
+        paths = list(nx.all_simple_paths(G, source=head, target=tail)) or [[head]]
+        if len(paths) > 1:
+            raise InvalidConfigurationError('The induced graph has more than one path')
+        self._fields_keys = paths[0]
         # combine fields
-        # 1. create one blob for each field
-        field_to_blob = {f: i for f, i in zip(self._fields_keys, range(len(self._fields_keys)))}
-        blobs = [[(v, ) for v in self._fields[f]] for f in self._fields_keys]
-        # 2. combine blobs
-        for f0, f1 in zip(self._fields_keys, self._fields_keys[1:]):
-            next_blob_id = len(blobs)
-            type, combinator_args = _get_blob_combinator(self._fields_keys, combination_map, f1)
-            combinator = _get_combinator(type)
-            blob0, blob1 = blobs[field_to_blob[f0]], blobs[field_to_blob[f1]]
-            blobs.append(_flatten_data(combinator(blob0, blob1, combinator_args)))
-            field_to_blob[f0] = next_blob_id
-            field_to_blob[f1] = next_blob_id
-        data = blobs[-1] if blobs else []
+        data = [(v,) for v in self._fields[self._fields_keys[0]]] if self._fields_keys else []
+        field_to_blob = {f : self._fields[f] for f in self._fields_keys}
+        for u, v in zip(self._fields_keys, self._fields_keys[1:]):
+            combinator_data = G.get_edge_data(u, v)
+            combinator_args = combinator_data['args']
+            combinator = _get_combinator(combinator_data['type'])
+            blob0, blob1 = field_to_blob[u], field_to_blob[v]
+            field_to_blob[u] = list(combinator(blob0, blob1, combinator_args))
+            data = field_to_blob[u]
         # turn data into CommandConfigs
         for d in data:
             assert len(self._fields_keys) == len(d)
@@ -134,26 +139,31 @@ def _parse_group(group_str, declared_fields):
     return type, fields, combinator_args
 
 
-def _flatten_data(blob):
-    nblob = []
-    for e in blob:
-        if isinstance(e, (tuple, list)) and isinstance(e[0], (tuple, list)):
-            nblob.append(e[0] + e[1])
-        else:
-            nblob.append(e)
-    return nblob
-
-
-def _get_blob_combinator(fields, combination_map, f1):
-    processed_fields = fields[:fields.index(f1)]
-    combs_w_f1 = [
-        combination_map[(f0, f1)] for f0 in processed_fields
-        if combination_map[(f0, f1)][0] != 'default'
-    ]
-    if len(combs_w_f1) > 1:
-        msg = f'Field "{f1}" is grouped with more than one field. Not supported'
-        raise CLISyntaxError(msg)
-    # ---
-    if len(combs_w_f1) == 0:
-        return 'default', None
-    return combs_w_f1.pop()
+def _complete_graph(G, default_comb=DEFAULT_COMBINATOR):
+    """
+    The given groups have added edges to the graph to form several connected components.
+    A graph is valid iff all connected components are valid.
+    A connected component is valid iff:
+        - it has n vertices and exactly n-1 edges
+        - the degree of each node is either 1 or 2
+    """
+    cc = [G.subgraph(c).copy() for c in nx.connected_components(G)]
+    cc_degree = [G1.degree() for G1 in cc]
+    unitary_nodes = []
+    for G1, degree in zip(cc, cc_degree):
+        msg = 'Invalid grouping. No loops of forks are allowed. ' + \
+              'Invalid grouping found between the fields: {}'.format(G1.nodes)
+        e = InvalidConfigurationError(msg, data=set(G1.nodes))
+        # check if this connected component is valid
+        if G1.number_of_edges() != G1.number_of_nodes()-1:
+            raise e
+        for _, d in degree:
+            if d not in [0, 1, 2]:
+                raise e
+        ends = [n for n, d in degree if d in [0, 1]]
+        unitary_nodes += ends if len(ends) > 1 else 2 * [ends[0]]
+    # all the connected components are valid, add missing edges
+    for n0, n1 in zip(unitary_nodes[1:-2], unitary_nodes[2:-1]):
+        G.add_edge(n0, n1, type=default_comb, args=None)
+    # return head, tail
+    return (unitary_nodes[0], unitary_nodes[-1]) if len(unitary_nodes) else (None, None)

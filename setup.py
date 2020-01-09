@@ -41,7 +41,9 @@ setup(
     zip_safe=False,
     include_package_data=True,
     keywords=['batch', 'parameterized', 'commands', 'shell'],
-    install_requires=[],
+    install_requires=[
+        'networkx'
+    ],
     scripts=['brun/brun'],
     classifiers=[
         'Development Status :: 3 - Alpha',

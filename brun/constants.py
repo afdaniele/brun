@@ -7,6 +7,8 @@ _RESET = b'\x1b[0m'
 
 MAX_PARALLEL_WORKERS = multiprocessing.cpu_count()
 
+DEFAULT_COMBINATOR = 'cross'
+
 PARALLEL_TO_START_PROMPT_STRING = {True: ':brun: Starting > {0}', False: ':brun:> {0}'}
 
 PARALLEL_TO_FAILURE_PROMPT_STRING = {True: ':brun: Failed < {0}', False: ':brun:< {0}\n\n\n'}
