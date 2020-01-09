@@ -84,8 +84,8 @@ class Config(object):
             raise InvalidConfigurationError('The induced graph has more than one path')
         self._fields_keys = paths[0]
         # combine fields
-        data = [(v,) for v in self._fields[self._fields_keys[0]]] if self._fields_keys else []
-        field_to_blob = {f : self._fields[f] for f in self._fields_keys}
+        data = [(v, ) for v in self._fields[self._fields_keys[0]]] if self._fields_keys else []
+        field_to_blob = {f: self._fields[f] for f in self._fields_keys}
         for u, v in zip(self._fields_keys, self._fields_keys[1:]):
             combinator_data = G.get_edge_data(u, v)
             combinator_args = combinator_data['args']
@@ -155,7 +155,7 @@ def _complete_graph(G, default_comb=DEFAULT_COMBINATOR):
               'Invalid grouping found between the fields: {}'.format(G1.nodes)
         e = InvalidConfigurationError(msg, data=set(G1.nodes))
         # check if this connected component is valid
-        if G1.number_of_edges() != G1.number_of_nodes()-1:
+        if G1.number_of_edges() != G1.number_of_nodes() - 1:
             raise e
         for _, d in degree:
             if d not in [0, 1, 2]:

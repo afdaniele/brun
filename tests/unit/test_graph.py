@@ -10,7 +10,6 @@ SHOW_GRAPH = False
 
 
 class TestConfig(unittest.TestCase):
-
     def _test(self, G):
         _complete_graph(G)
         _render_graph(G)
@@ -91,7 +90,6 @@ class TestConfig(unittest.TestCase):
             self.assertEqual({'n2', 'n3', 'n4', 'n5'}, e.data)
 
 
-
 def _render_graph(G):
     if not SHOW_GRAPH:
         return
@@ -99,15 +97,14 @@ def _render_graph(G):
     processed = set()
     for u in G.nodes:
         s += ' [{}]->({})'.format(
-            u,
-            ','.join([
+            u, ','.join([
                 '{}:{}'.format(G.get_edge_data(u, v)['type'], v)
                 for v in set(G.neighbors(u)).difference(processed)
-            ])
-        )
+            ]))
         processed.add(u)
     s = '\nGraph: ' + (s if len(s) else '[]')
     print(s)
+
 
 if __name__ == '__main__':
     unittest.main()
