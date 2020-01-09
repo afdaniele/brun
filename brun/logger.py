@@ -15,7 +15,6 @@ def get_logger(console):
 
 
 class BrLogger(logging.Logger):
-    
     def __init__(self, console, name, level=logging.NOTSET):
         super(BrLogger, self).__init__(name, level)
         self.console = console

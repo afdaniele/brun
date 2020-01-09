@@ -133,15 +133,11 @@ class Brun():
         if not stderr_only:
             for cmd, std in zip(cmds, stdouts):
                 if len(std):
-                    brconsole.write(TASK_OUTPUT_TEMPLATE.format(
-                        cmd=cmd, content=std.rstrip()
-                    ))
+                    brconsole.write(TASK_OUTPUT_TEMPLATE.format(cmd=cmd, content=std.rstrip()))
         # dump stderr to console
         for cmd, std in zip(cmds, stderrs):
             if len(std):
-                brconsole.write(TASK_ERROR_TEMPLATE.format(
-                    cmd=cmd, content=std.rstrip()
-                ))
+                brconsole.write(TASK_ERROR_TEMPLATE.format(cmd=cmd, content=std.rstrip()))
 
     def _get_progress(self):
         stats = self.pool.get_stats()
