@@ -28,13 +28,12 @@ def get_parser():
                         action='append',
                         default=argparse.SUPPRESS,
                         help="Specify a field (syntax: 'name:type[:args]')")
-    parser.add_argument(
-        '-g',
-        '--group',
-        action='append',
-        default=['cross:*,*'],
-        help=
-        "Group two or more fields together according to a combination strategy (syntax: 'strategy:field1,field2[,...]')"
+    parser.add_argument('-g',
+                        '--group',
+                        action='append',
+                        default=['cross:*,*'],
+                        help="Group two or more fields together according to a " + \
+                        "combination strategy (syntax: 'strategy:field1,field2[,...]')"
     )
     parser.add_argument('-p',
                         '--parallel',

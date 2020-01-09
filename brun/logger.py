@@ -26,3 +26,5 @@ class BrLogger(logging.Logger):
         msg = '{}:{}'.format(logging._levelToName[lvl], msg)
         # add message to buffer
         self.console.write(msg)
+        # force flush
+        self.console.flush()

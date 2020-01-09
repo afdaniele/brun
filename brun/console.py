@@ -93,7 +93,7 @@ class Console():
     def _status_bar(self):
         return "[brun {:.1f} s] [{:s}] [{:d}/{:d} complete] [{:d}/{:d} jobs] [{:d} queued] [{:d} aborted] [{:d} failed]".format(
             self.uptime(),
-            self.progress['app_status'],
+            str(self.progress['app_status']),
             self.progress['tasks_completed'],
             self.progress['tasks_total'],
             self.progress['jobs_max'] - self.progress['jobs_idle'],

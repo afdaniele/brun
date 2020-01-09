@@ -58,7 +58,6 @@ class Brun():
             self.config = Config(self.args)
         except CLISyntaxError as e:
             brlogger.error(str(e))
-            parser.print_help()
             exit(-1)
         except Exception as e:
             brlogger.error(str(e))
