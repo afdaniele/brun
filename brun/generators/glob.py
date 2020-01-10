@@ -13,24 +13,23 @@ type_to_fcn_map = {
 def generate(args):
     args = args[0].split(',')
     if len(args) not in [1, 2, 3]:
-        msg = 'The field type "glob" takes the following arguments: ' + \
-              'path[,query[,filter-type]]'
-        raise ValueError(msg)
+        raise ValueError('The field type "glob" takes the following arguments: ' + \
+                         'path[,query[,filter-type]]'
+        )
     # ---
     path = args[0]
     if not os.path.exists(path):
-        msg = f'The path "{path}" does not exist.'
-        raise ValueError(msg)
+        raise ValueError('The path "{}" does not exist.'.format(path))
     if not os.path.isdir(path):
-        msg = f'The path "{path}" is not a directory.'
-        raise ValueError(msg)
+        raise ValueError('The path "{}" is not a directory.'.format(path))
     # ---
     query = '*' if len(args) <= 1 else args[1]
     # ---
     type = '*' if len(args) <= 2 else args[2].strip()
     if type not in type_to_fcn_map:
-        msg = f'Unknown type "{type}" for filter-type argument. Allowed {list(type_to_fcn_map.keys())}'
-        raise ValueError(msg)
+        raise ValueError('Unknown type "{}" for filter-type argument. Allowed {}'.format(
+            type, list(type_to_fcn_map.keys())
+        ))
     filter_type = type_to_fcn_map[type]
     # ---
     glob_query = os.path.join(path, query)

@@ -112,12 +112,12 @@ class Config(object):
 def _parse_field(field_str):
     parts = tuple(field_str.split(':'))
     if len(parts) <= 1:
-        raise CLISyntaxError(f'Syntax error in field descriptor "{field_str}"')
+        raise CLISyntaxError('Syntax error in field descriptor "{}"'.format(field_str))
     # ---
     name, type, *generator_args = parts
     # validate field name
     if not re.search('\w+', name):
-        raise CLISyntaxError(f'Field name {name} not valid. Only letters and numbers are allowed')
+        raise CLISyntaxError('Field name {} not valid. Only letters and numbers are allowed'.format(name))
     # ---
     return name, type, generator_args
 
@@ -125,17 +125,17 @@ def _parse_field(field_str):
 def _parse_group(group_str, declared_fields):
     parts = tuple(group_str.split(':'))
     if len(parts) <= 1:
-        raise CLISyntaxError(f'Syntax error in group descriptor "{group_str}"')
+        raise CLISyntaxError('Syntax error in group descriptor "{}"'.format(group_str))
     # ---
     type, fields, *combinator_args = parts
     # verify fields
     fields = fields.split(',')
     if len(fields) <= 1:
-        msg = f'Group descriptor "{group_str}" should have at least two fields, {len(fields)} given'
+        msg = 'Group descriptor "{}" should have at least two fields, {} given'.format(group_str, len(fields))
         raise CLISyntaxError(msg)
     for field in fields:
         if field not in declared_fields + ['*']:
-            msg = f'Field "{field}" used in group argument "{group_str}" was not declared'
+            msg = 'Field "{}" used in group argument "{}" was not declared'.format(field, group_str)
             raise CLISyntaxError(msg)
     # ---
     return type, fields, combinator_args

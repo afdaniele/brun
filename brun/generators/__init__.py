@@ -47,7 +47,7 @@ _generators_map.update({alias: generator_json for alias in aliases_json})
 
 def _get_generator(gen_name):
     if not gen_name in _generators_map:
-        msg = f'Field type "{gen_name}" not found!'
+        msg = 'Field type "{}" not found!'.format(gen_name)
         raise ValueError(msg)
     # ---
     return _generators_map[gen_name]

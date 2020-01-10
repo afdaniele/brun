@@ -37,7 +37,7 @@ setup(
     author='Andrea F. Daniele',
     author_email='afdaniele@ttic.edu',
     url='https://github.com/afdaniele/',
-    download_url=f'https://github.com/afdaniele/run-batch/tarball/{lib_version}',
+    download_url='https://github.com/afdaniele/run-batch/tarball/{}'.format(lib_version),
     zip_safe=False,
     include_package_data=True,
     keywords=['batch', 'parameterized', 'commands', 'shell'],

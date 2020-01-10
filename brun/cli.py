@@ -12,7 +12,7 @@ def run():
     # version
     f = sys.argv.index('--') if '--' in sys.argv else len(sys.argv)
     if '-v' in sys.argv[1:f] or '--version' in sys.argv[1:f]:
-        print(f'brun version {__version__}\n')
+        print('brun version {}\n'.format(__version__))
         exit(0)
     # ---
     # parse arguments

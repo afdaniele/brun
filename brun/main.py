@@ -101,7 +101,7 @@ class Brun():
 
     def status(self, status=None):
         if status and not isinstance(status, AppStatus):
-            raise ValueError(f'Invalid status {status}')
+            raise ValueError('Invalid status {}'.format(status))
         if status:
             self._status = status
         return self._status

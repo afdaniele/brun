@@ -10,7 +10,7 @@ def generate(args):
     # ---
     filepath = args[0]
     if not os.path.exists(filepath):
-        msg = f'The file "{filepath}" does not exist.'
+        msg = 'The file "{}" does not exist.'.format(filepath)
         raise ValueError(msg)
     # ---
     with open(filepath, 'rt') as fin:
