@@ -17,8 +17,8 @@ def get_version(filename):
     return version
 
 
-if sys.version_info < (3, 6):
-    msg = 'run-batch works with Python 3.6 and later.\nDetected %s.' % str(sys.version)
+if sys.version_info < (3, 5):
+    msg = 'run-batch works with Python 3.5 and later.\nDetected %s.' % str(sys.version)
     sys.exit(msg)
 
 lib_version = get_version(filename='brun/__init__.py')
