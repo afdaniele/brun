@@ -75,24 +75,40 @@ class Console():
         # get the lock
         self.lock.acquire()
         # clear last line
-        if self.show_status and self.has_progress and self.delete_last and (not self.plain_console):
-            # clear 2 lines
-            self.stdout.write("\033[F\033[K" * 2)
+        self._clear_status_bar()
         # dump buffer content on the console
         while not self.buffer.empty():
             line = self.buffer.get()
             self.stdout.write(line + "\033[K")
         # print separator then status bar
-        if self.show_status and self.has_progress:
-            self.stdout.write(("-" * 80) + "\n")
-            self.stdout.write(self._status_bar() + "\n")
-            self.delete_last = True
+        self._print_status_bar()
         # flush stdout
         self.stdout.flush()
         # release the lock
         self.lock.release()
 
-    def _status_bar(self):
+    def close(self):
+        self.set_show_status(False)
+        # clear status (if any)
+        self._clear_status_bar()
+
+    def _clear_status_bar(self):
+        if self.delete_last and (not self.plain_console):
+            # clear 2 lines
+            self.stdout.write("\033[F\033[K" * 2)
+            self.delete_last = False
+            # flush stdout
+            self.stdout.flush()
+
+    def _print_status_bar(self):
+        if self.show_status and self.has_progress:
+            self.stdout.write(("-" * 80) + "\n")
+            self.stdout.write(self._get_status_bar() + "\n")
+            self.delete_last = True
+            # flush stdout
+            self.stdout.flush()
+
+    def _get_status_bar(self):
         return "[brun {:.1f} s] [{:s}] [{:d}/{:d} complete] [{:d}/{:d} jobs] [{:d} queued] [{:d} aborted] [{:d} failed]".format(
             self.uptime(),
             str(self.progress['app_status']),

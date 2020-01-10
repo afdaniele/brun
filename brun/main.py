@@ -97,7 +97,7 @@ class Brun():
         self._process_tasks_output(stderr_only=(not self.args.verbose))
         # ---
         brlogger.info('Done!')
-        brconsole.flush()
+        brconsole.close()
 
     def status(self, status=None):
         if status and not isinstance(status, AppStatus):
