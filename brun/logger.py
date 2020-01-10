@@ -20,11 +20,17 @@ class BrLogger(logging.Logger):
         self.console = console
 
     def _log(self, lvl, msg, *args, **kwargs):
+        pre = ''
+        if 'step' in kwargs:
+            pre = '[{}] '.format(kwargs['step'])
         # build message
         if not msg.endswith('\n'):
             msg += '\n'
-        msg = '{}:{}'.format(logging._levelToName[lvl], msg)
+        if 'clear' in kwargs and kwargs['clear']:
+            out = msg
+        else:
+            out = '{}:{}{}'.format(logging._levelToName[lvl], pre, msg)
         # add message to buffer
-        self.console.write(msg)
+        self.console.write(out)
         # force flush
         self.console.flush()

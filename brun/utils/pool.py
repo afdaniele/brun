@@ -1,11 +1,11 @@
+import sys
+import traceback
+
 from queue import Queue
 from threading import Thread, Event, Semaphore
-from sys import stdout, stderr, exc_info
 from time import sleep
 from collections import defaultdict
 from copy import copy
-
-import traceback
 
 from brun import brlogger
 from brun.exceptions import TaskFailureError
@@ -48,7 +48,7 @@ class Worker(Thread):
                     self.results.put(result)
             except TaskFailureError:
                 # get info about the error
-                ex_type, ex, tb = exc_info()
+                ex_type, ex, tb = sys.exc_info()
                 # get partial results and errors
                 result = ex.result
                 if (result is not None):
@@ -57,7 +57,7 @@ class Worker(Thread):
                 self.stats.increase('tasks_failed')
                 self.exception_handler(self.name, ex_type, ex, tb, args, kwargs)
             except:
-                ex_type, ex, tb = exc_info()
+                ex_type, ex, tb = sys.exc_info()
                 self.stats.increase('tasks_failed')
                 traceback.print_exception(ex_type, ex, tb, file=sys.stderr)
             finally:

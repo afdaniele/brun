@@ -94,7 +94,7 @@ class Brun():
         brconsole.set_progress(self._get_progress())
         brconsole.set_show_status(False)
         # show collected errors
-        self._process_tasks_output(stderr_only=(not self.args.verbose))
+        self._process_tasks_output()
         # ---
         brlogger.info('Done!')
         brconsole.close()
@@ -132,11 +132,11 @@ class Brun():
         if not stderr_only:
             for cmd, std in zip(cmds, stdouts):
                 if res.returncode == 0 and len(std):
-                    brconsole.write(TASK_OUTPUT_TEMPLATE.format(cmd=cmd, content=std.rstrip()))
+                    brconsole.write(TASK_OUTPUT_TEMPLATE.format(cmd=cmd, content=std))
         # dump stderr to console
         for cmd, std in zip(cmds, stderrs):
             if res.returncode != 0 and len(std):
-                brconsole.write(TASK_ERROR_TEMPLATE.format(cmd=cmd, content=std.rstrip()))
+                brconsole.write(TASK_ERROR_TEMPLATE.format(cmd=cmd, content=std))
 
     def _get_progress(self):
         stats = self.pool.get_stats()
@@ -150,7 +150,7 @@ class Brun():
 
     def _worker_task(self, cmd):
         cmd_str = ' '.join(cmd)
-        stdout = subprocess.PIPE if self.is_parallel else sys.stdout
+        stdout_pipe = subprocess.PIPE
         result = types.SimpleNamespace(cmd=cmd, stdout="", stderr="", returncode=None)
         # -->
         brlogger.info(PARALLEL_TO_START_PROMPT_STRING[self.is_parallel].format(cmd_str))
@@ -159,14 +159,22 @@ class Brun():
             # launch task
             task = subprocess.Popen(cmd_str,
                                     shell=True,
-                                    stdout=stdout,
+                                    stdout=stdout_pipe,
                                     stderr=subprocess.PIPE,
                                     preexec_fn=no_sigint)
             # wait for the task to end
             task.wait()
-            if self.is_parallel:
-                result.stdout = task.stdout.read().decode('utf-8')
-            result.stderr = task.stderr.read().decode('utf-8')
+            # fetch and decode stdout and stderr
+            stdout = task.stdout.read().decode('utf-8').rstrip()
+            stderr = task.stderr.read().decode('utf-8').rstrip()
+            # print right now if not parallel, store for later otherwise
+            result.stdout = stdout
+            result.stderr = stderr
+            if not self.is_parallel and self.args.verbose:
+                brlogger.info(stdout, clear=True)
+                if task.returncode == 0:
+                    brlogger.info(stderr, clear=True)
+            # get return code
             result.returncode = task.returncode
             # on failure
             if task.returncode != 0:
