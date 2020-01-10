@@ -131,11 +131,11 @@ class Brun():
         # dump stdout to console
         if not stderr_only:
             for cmd, std in zip(cmds, stdouts):
-                if len(std):
+                if res.returncode == 0 and len(std):
                     brconsole.write(TASK_OUTPUT_TEMPLATE.format(cmd=cmd, content=std.rstrip()))
         # dump stderr to console
         for cmd, std in zip(cmds, stderrs):
-            if len(std):
+            if res.returncode != 0 and len(std):
                 brconsole.write(TASK_ERROR_TEMPLATE.format(cmd=cmd, content=std.rstrip()))
 
     def _get_progress(self):
@@ -151,7 +151,7 @@ class Brun():
     def _worker_task(self, cmd):
         cmd_str = ' '.join(cmd)
         stdout = subprocess.PIPE if self.is_parallel else sys.stdout
-        result = types.SimpleNamespace(cmd=cmd, stdout="", stderr="")
+        result = types.SimpleNamespace(cmd=cmd, stdout="", stderr="", returncode=None)
         # -->
         brlogger.info(PARALLEL_TO_START_PROMPT_STRING[self.is_parallel].format(cmd_str))
         if not self.args.dry_run:
@@ -167,6 +167,7 @@ class Brun():
             if self.is_parallel:
                 result.stdout = task.stdout.read().decode('utf-8')
             result.stderr = task.stderr.read().decode('utf-8')
+            result.returncode = task.returncode
             # on failure
             if task.returncode != 0:
                 brlogger.info(PARALLEL_TO_FAILURE_PROMPT_STRING[self.is_parallel].format(cmd_str))
