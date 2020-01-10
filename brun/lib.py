@@ -24,7 +24,7 @@ class CommandConfig(object):
         try:
             return [c.format(**self._data) for c in command]
         except KeyError as e:
-            msg = f'The command contains a field {e} that was not declared'
+            msg = 'The command contains a field {} that was not declared'.format(e)
         raise CLISyntaxError(msg)
 
     def __str__(self):
@@ -49,7 +49,8 @@ class Config(object):
             name, type, generator_args = _parse_field(field_str)
             # make sure the fields are unique
             if name in self._fields:
-                msg = f'Collision between fields. The field {name} was declared more than once.'
+                msg = 'Collision between fields. ' + \
+                      'The field {} was declared more than once.'.format(name)
                 raise ValueError(msg)
             # generate data
             generator = _get_generator(type)
@@ -67,12 +68,14 @@ class Config(object):
         G = nx.Graph()
         # add nodes
         G.add_nodes_from(self._fields_keys)
+        brlogger.debug('Add nodes {}'.format(self._fields_keys))
         # parse groups
         for group_str in parsed.group:
             # parse group
             type, fields, combinator_args = _parse_group(group_str, self._fields_keys)
             # add edges
             for f0, f1 in zip(fields, fields[1:]):
+                brlogger.debug('Add edge. Type {} between fields ({}, {})'.format(type, f0, f1))
                 G.add_edge(f0, f1, type=type, args=combinator_args)
         # make sure the graph is consistent
         head, tail = _complete_graph(G)
@@ -91,8 +94,7 @@ class Config(object):
             combinator_args = combinator_data['args']
             combinator = _get_combinator(combinator_data['type'])
             blob0, blob1 = field_to_blob[u], field_to_blob[v]
-            field_to_blob[u] = list(combinator(blob0, blob1, combinator_args))
-            data = field_to_blob[u]
+            data = field_to_blob[v] = _flatten_data(combinator(blob0, blob1, combinator_args))
         # turn data into CommandConfigs
         for d in data:
             assert len(self._fields_keys) == len(d)
@@ -137,6 +139,16 @@ def _parse_group(group_str, declared_fields):
             raise CLISyntaxError(msg)
     # ---
     return type, fields, combinator_args
+
+
+def _flatten_data(blob):
+    nblob = []
+    for e in blob:
+        if isinstance(e, (tuple, list)) and isinstance(e[0], (tuple, list)):
+            nblob.append(e[0] + (e[1],))
+        else:
+            nblob.append(e)
+    return nblob
 
 
 def _complete_graph(G, default_comb=DEFAULT_COMBINATOR):

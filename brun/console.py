@@ -44,12 +44,14 @@ class Console():
         self.buffer = Queue()
         self.lock = threading.Semaphore(1)
         self.progress = defaultdict(lambda: 0)
+        self.has_progress = False
         self.delete_last = False
-        self.show_status = True
+        self.show_status = None
         self.plain_console = False
 
     def set_progress(self, progress):
         self.progress.update(progress)
+        self.has_progress = True
         self.flush()
 
     def uptime(self):
@@ -73,7 +75,7 @@ class Console():
         # get the lock
         self.lock.acquire()
         # clear last line
-        if self.show_status and self.delete_last and (not self.plain_console):
+        if self.show_status and self.has_progress and self.delete_last and (not self.plain_console):
             # clear 2 lines
             self.stdout.write("\033[F\033[K" * 2)
         # dump buffer content on the console
@@ -81,7 +83,7 @@ class Console():
             line = self.buffer.get()
             self.stdout.write(line + "\033[K")
         # print separator then status bar
-        if self.show_status:
+        if self.show_status and self.has_progress:
             self.stdout.write(("-" * 80) + "\n")
             self.stdout.write(self._status_bar() + "\n")
             self.delete_last = True

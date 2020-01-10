@@ -3,6 +3,7 @@ import argparse
 
 from .main import Brun
 from . import brlogger, __version__
+from .constants import DEFAULT_COMBINATOR
 
 
 def run():
@@ -31,9 +32,10 @@ def get_parser():
     parser.add_argument('-g',
                         '--group',
                         action='append',
-                        default=['cross:*,*'],
+                        default=[],
                         help="Group two or more fields together according to a " + \
-                        "combination strategy (syntax: 'strategy:field1,field2[,...]')"
+                        "combination strategy (syntax: 'strategy:field1,field2[,...]'). " + \
+                        "Default is {}".format(DEFAULT_COMBINATOR)
     )
     parser.add_argument('-p',
                         '--parallel',
