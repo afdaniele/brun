@@ -28,8 +28,7 @@ def generate(args):
     type = '*' if len(args) <= 2 else args[2].strip()
     if type not in type_to_fcn_map:
         raise ValueError('Unknown type "{}" for filter-type argument. Allowed {}'.format(
-            type, list(type_to_fcn_map.keys())
-        ))
+            type, list(type_to_fcn_map.keys())))
     filter_type = type_to_fcn_map[type]
     # ---
     glob_query = os.path.join(path, query)

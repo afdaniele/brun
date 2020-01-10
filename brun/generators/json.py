@@ -28,14 +28,16 @@ def generate(args):
     _, lst = next(iter(data.items()))
     # check if the file contains a signle key
     if not (len(data) == 1 and isinstance(lst, list)):
-        msg = 'The file "{}" must contain a single key with a list of objects as value'.format(filepath)
+        msg = 'The file "{}" must contain a single key with a list of objects as value'.format(
+            filepath)
         raise JSONInputError(msg)
     # simple case: empty list
     if len(lst) == 0:
         return {}
     # check if the list contains dictionaries only
     if sum([int(isinstance(e, dict)) for e in lst]) != len(lst):
-        msg = 'The file "{}" must contain a single key with a list of objects as value'.format(filepath)
+        msg = 'The file "{}" must contain a single key with a list of objects as value'.format(
+            filepath)
         raise JSONInputError(msg)
     # get the prototype of the objects from the first one
     _proto = lambda d: [(k, type(v)) for k, v in d.items()]
@@ -43,7 +45,8 @@ def generate(args):
     # allowed types are [int, float, string]
     for _, t in proto:
         if t not in [int, float, str]:
-            msg = 'All the objects in the file "{}" must contain only values of types [int, float, str]'.format(filepath)
+            msg = 'All the objects in the file "{}" must contain only values of types [int, float, str]'.format(
+                filepath)
             raise JSONInputError(msg)
     # check if all the dictionaries contain the same keys => types
     for d in lst:

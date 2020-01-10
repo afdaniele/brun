@@ -117,7 +117,8 @@ def _parse_field(field_str):
     name, type, *generator_args = parts
     # validate field name
     if not re.search('\w+', name):
-        raise CLISyntaxError('Field name {} not valid. Only letters and numbers are allowed'.format(name))
+        raise CLISyntaxError(
+            'Field name {} not valid. Only letters and numbers are allowed'.format(name))
     # ---
     return name, type, generator_args
 
@@ -131,11 +132,13 @@ def _parse_group(group_str, declared_fields):
     # verify fields
     fields = fields.split(',')
     if len(fields) <= 1:
-        msg = 'Group descriptor "{}" should have at least two fields, {} given'.format(group_str, len(fields))
+        msg = 'Group descriptor "{}" should have at least two fields, {} given'.format(
+            group_str, len(fields))
         raise CLISyntaxError(msg)
     for field in fields:
         if field not in declared_fields + ['*']:
-            msg = 'Field "{}" used in group argument "{}" was not declared'.format(field, group_str)
+            msg = 'Field "{}" used in group argument "{}" was not declared'.format(
+                field, group_str)
             raise CLISyntaxError(msg)
     # ---
     return type, fields, combinator_args
@@ -145,7 +148,7 @@ def _flatten_data(blob):
     nblob = []
     for e in blob:
         if isinstance(e, (tuple, list)) and isinstance(e[0], (tuple, list)):
-            nblob.append(e[0] + (e[1],))
+            nblob.append(e[0] + (e[1], ))
         else:
             nblob.append(e)
     return nblob
