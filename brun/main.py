@@ -63,8 +63,16 @@ class Brun():
             brlogger.error(str(e))
             exit(-2)
         # define number of workers
-        num_workers = self.args.parallel if self.args.parallel != -1 else len(self.config)
-        num_workers = min(MAX_PARALLEL_WORKERS, max(1, num_workers))
+        num_workers = 1
+        # parallel (bounded to number of cores)
+        if self.args.parallel > 0:
+            num_workers = min(self.args.parallel, NUMBER_OF_CORES)
+        # parallel (unbounded)
+        if self.args.force_parallel > 0:
+            num_workers = self.args.force_parallel
+        # do not spin more workers than needed
+        num_workers = min(num_workers, len(self.config))
+        # parallel execution "is a thing" when you need at least 2 workers
         self.is_parallel = num_workers > 1
         # create workers pool
         self.pool = Pool(num_workers, self._exception_handler)

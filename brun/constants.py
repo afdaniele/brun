@@ -5,7 +5,7 @@ _GREY = b'\x1b[30m'
 _BOLD = b'\x1b[1m'
 _RESET = b'\x1b[0m'
 
-MAX_PARALLEL_WORKERS = multiprocessing.cpu_count()
+NUMBER_OF_CORES = multiprocessing.cpu_count()
 
 DEFAULT_COMBINATOR = 'cross'
 

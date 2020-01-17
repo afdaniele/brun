@@ -1,9 +1,10 @@
 import sys
+import math
 import argparse
 
 from .main import Brun
 from . import brlogger, __version__
-from .constants import DEFAULT_COMBINATOR
+from .constants import DEFAULT_COMBINATOR, NUMBER_OF_CORES
 
 
 def run():
@@ -35,16 +36,23 @@ def get_parser():
                         default=[],
                         help="Group two or more fields together according to a " + \
                         "combination strategy (syntax: 'strategy:field1,field2[,...]'). " + \
-                        "Default is {}".format(DEFAULT_COMBINATOR)
-    )
+                        "Default is {}".format(DEFAULT_COMBINATOR))
     parser.add_argument('-p',
                         '--parallel',
-                        const=-1,
+                        const=math.ceil(NUMBER_OF_CORES / 2.0),
                         default=1,
                         action='store',
                         nargs='?',
                         type=int,
-                        help="How many commands can run in parallel")
+                        help="How many commands can run in parallel " +
+                             "(bounded by the number of cores). " +
+                             "Default is half the available cores.")
+    parser.add_argument('-P',
+                        '--force-parallel',
+                        default=-1,
+                        type=int,
+                        help="Force how many commands can run in parallel " +
+                             "(unbounded)")
     parser.add_argument('-i',
                         '--interactive',
                         action='store_true',
